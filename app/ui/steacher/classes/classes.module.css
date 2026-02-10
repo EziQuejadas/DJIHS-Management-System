@@ -1,0 +1,134 @@
+.container {
+    padding: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.pageHeader {
+    margin-bottom: 20px;
+}
+
+.pageTitle {
+    color: #2d5f4f;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Grid: Ensuring it stretches to the right */
+.classesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 15px;
+    width: 100%;
+}
+
+/* The Card Structure */
+.classCard {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #edf2f0;
+}
+
+.classCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Header/Image Area */
+.classImage {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: white;
+}
+
+.subjectOverlay {
+    font-size: 56px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 800;
+}
+
+/* Subject Colors */
+.defaultBg { background: linear-gradient(135deg, #805ad5, #b794f4); }
+
+/* Text Content */
+.classContent {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.classSubject {
+    font-size: 20px;
+    color: #1a202c;
+    font-weight: 700;
+    margin: 0;
+}
+
+.classSection {
+    color: #4a5568;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.classSchedule {
+    color: #718096;
+    font-size: 14px;
+}
+
+/* Footer with Student Count and Button */
+.classFooter {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.studentCount {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.viewBtn {
+    background-color: #2d5f4f;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.viewBtn:hover {
+    background-color: #1a3d32;
+}
+
+.loading {
+    padding: 50px;
+    text-align: center;
+    color: #2d5f4f;
+    font-weight: 600;
+}

@@ -1,0 +1,30 @@
+.container {
+  position: relative;
+  flex: 0 0 300px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #2D5F5D;
+}
+
+/* You can use a pseudo-element for the 🔍 icon if you don't want to use an <img> tag */
+.container::before {
+  content: '🔍';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  pointer-events: none;
+}

@@ -1,0 +1,22 @@
+.container {
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 5px 0px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: black; 
+  transition: all 0.3s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.container:hover, .active{
+  background-color: #1F6354; 
+  color: white  ;
+}
+
+.container svg {
+  font-size: 20px;
+}

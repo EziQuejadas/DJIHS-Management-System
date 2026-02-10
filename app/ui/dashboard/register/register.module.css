@@ -1,0 +1,114 @@
+/* register.module.css */
+
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e1f5f1;
+    margin: 20px;
+}
+
+.title {
+    font-size: 24px;
+    color: #1F6354;
+    font-weight: 700;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #E1F5F1;
+    padding-bottom: 10px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 800px; /* Limits width so it doesn't stretch too far on wide screens */
+}
+
+.row {
+    display: flex;
+    gap: 15px;
+}
+
+.row > div, 
+.form > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.form label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F6354;
+    margin-bottom: 5px;
+}
+
+.form input, 
+.form select {
+    width: 100%;
+    height: 45px;
+    background: #f9fdfc;
+    border: 2px solid #1F6354;
+    outline: none;
+    border-radius: 8px;
+    font-size: 15px;
+    padding: 0 15px;
+    color: #1F6354;
+    transition: all 0.2s ease;
+}
+
+.form input:focus,
+.form select:focus {
+    background: white;
+    box-shadow: 0 0 0 3px rgba(79, 164, 132, 0.2);
+}
+
+.form input::placeholder {
+    color: rgba(31, 99, 84, 0.5);
+}
+
+.form button {
+    margin-top: 10px;
+    width: 200px; /* Fixed width for a more professional dashboard look */
+    height: 45px;
+    background: #E1F5F1;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #4FA484;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.form button:hover {
+    background: #1F6354;
+    color: white;
+}
+
+.form button:disabled {
+    background: #f0f0f0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.errorBanner {
+    background-color: #fee2e2;
+    border: 1px solid #ef4444;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Mobile stacking */
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+    .form button {
+        width: 100%;
+    }
+}

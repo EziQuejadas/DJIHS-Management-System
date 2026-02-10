@@ -1,0 +1,188 @@
+.pageContainer {
+    padding: 5px;
+    max-width: 100%;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    /* Keeps the whole page from shifting vertically */
+    min-height: 100vh; 
+}
+
+.pageTitle {
+    color: #2d5f4f;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+/* Toolbar Container */
+.filtersSection {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #edf2f0;
+}
+
+/* Optional Label for the Filter */
+.filterLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.filterSelect {
+    appearance: none; /* Removes default browser arrow */
+    background-color: #f9fafb;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding: 8px 35px 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    min-width: 160px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filterSelect:hover {
+    border-color: #2d5f4f;
+    background-color: #ffffff;
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: #2d5f4f;
+    box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.1);
+}
+
+/* Table Container - This fills the "Empty Space" below the table */
+.gradeTableContainer {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    /* This ensures that even with 1 student, the white box stays large */
+    min-height: 500px; 
+}
+
+.gradeTable {
+    width: 100%;
+    border-collapse: collapse;
+    /* CRITICAL: Fixes column widths so they never move during input */
+    table-layout: fixed; 
+}
+
+/* Precise Column Widths to remove horizontal gaps */
+.gradeTable th:nth-child(1) { width: 140px; } /* LRN */
+.gradeTable th:nth-child(2) { width: auto; }  /* Name (takes remaining space) */
+.gradeTable th:nth-child(3) { width: 150px; } /* Written Work */
+.gradeTable th:nth-child(4) { width: 150px; } /* Performance Task */
+.gradeTable th:nth-child(5) { width: 100px; } /* Final */
+.gradeTable th:nth-child(6) { width: 130px; } /* Remarks */
+
+.gradeTable th {
+    background-color: #f8faf9;
+    color: #2d5f4f;
+    padding: 18px 15px;
+    text-align: left;
+    font-size: 13px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #edf2f0;
+}
+
+.gradeTable td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f1f1;
+    height: 60px; /* Fixed row height prevents vertical jumping */
+    vertical-align: middle;
+}
+
+/* Grade Input - Styled to fit 2 digits perfectly */
+.gradeInput {
+    box-sizing: border-box;
+    width: 60px;
+    height: 35px;
+    padding: 0;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.gradeInput::-webkit-outer-spin-button,
+.gradeInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Status Badges - Fixed width so "PASSED" and "FAILED" use the same space */
+.statusPassed, .statusFailed {
+    padding: 4px 0;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-block;
+    width: 85px; 
+    text-align: center;
+}
+
+.statusPassed { color: #1e7e34; background-color: #e6f4ea; }
+.statusFailed { color: #d93025; background-color: #fce8e6; }
+
+/* Action Buttons */
+.actionButtons {
+    margin-top: 25px;
+    /* Pushes button to the left as seen in your 3rd image */
+    display: flex;
+    justify-content: flex-start; 
+}
+
+.btnPrimary {
+    background-color: #2d5f4f;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.lockBanner {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border-left: 5px solid #ffeeba;
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.inputLocked {
+    background-color: #f8f9fa !important;
+    cursor: not-allowed;
+    border: 1px solid #dee2e6 !important;
+    color: #adb5bd;
+}
+
+.btnDisabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    padding: 12px 24px;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+}

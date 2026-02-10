@@ -1,0 +1,14 @@
+.generateBtn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4FB9A9 0%, #6FD9C5 100%);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.generateBtn:hover {
+    opacity: 0.9;
+}

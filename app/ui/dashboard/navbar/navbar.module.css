@@ -1,0 +1,48 @@
+.container {
+    padding: 15px 25px;
+    border-radius: 5px;
+    align-items: center;
+    background-color: #1F6354;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    color: white;
+    font-weight: 500;
+    font-size: 20px;
+    letter-spacing: 0px;
+} 
+
+.user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.userImage {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2); /* Subtle ring around avatar */
+}
+
+.userDetail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.username {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.userTitle {
+    color: rgba(255, 255, 255, 0.8); /* Slightly transparent white for hierarchy */
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 2px;
+}

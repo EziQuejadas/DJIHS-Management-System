@@ -1,0 +1,98 @@
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -10px;
+}
+
+.pageTitle {
+    font-size: 26px;
+    color: #2d5f4f;
+    font-weight: 600;
+}
+
+.viewAllLink {
+    color: #2d5f4f;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.viewAllLink:hover {
+    text-decoration: underline;
+}
+
+/* Subject Table */
+.subjectsContainer {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.subjectTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.subjectTable thead {
+    background: #f8f9fa;
+}
+
+.subjectTable th {
+    text-align: left;
+    padding: 15px 20px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.subjectTable td {
+    padding: 18px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    color: black;
+}
+
+.subjectTable tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.statusBadge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.statuspending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.statuscompleted {
+    background: #d4edda;
+    color: #155724;
+}
+
+.statusnotstarted {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.optionsBtn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.optionsBtn:hover {
+    background: #e8f5f1;
+    color: #2d5f4f;
+}

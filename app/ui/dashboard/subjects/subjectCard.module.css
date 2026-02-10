@@ -1,0 +1,79 @@
+.subjectCard {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none; /* Removes default button or div borders */
+}
+
+.subjectCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.subjectAccent {
+    width: 25px;
+    flex-shrink: 0;
+    /* This matches the linear gradient from your design */
+    background: linear-gradient(135deg, #2d5f5d 0%, #3d8b87 100%);
+}
+
+.subjectContent {
+    flex: 1;
+    padding: 25px 30px;
+    padding-right: 100px; /* Space for the floating icon */
+    position: relative;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.subjectTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.subjectInfo {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.subjectDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detailItem {
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.subjectIcon {
+    position: absolute;
+    top: 50%;
+    right: 25px;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    background: #2d5f5d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Ensure images inside the icon circle fit correctly */
+.subjectIcon img {
+    object-fit: contain;
+    filter: brightness(0) invert(1); /* Makes the icon white if it's a dark PNG */
+}
