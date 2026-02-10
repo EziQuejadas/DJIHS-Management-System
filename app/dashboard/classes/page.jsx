@@ -1,19 +1,20 @@
-"use client"; // Required for onClick events
+"use client"; // Required for onClick events and state
 
 import styles from "@/app/ui/dashboard/classes/classes.module.css";
 import { fetchClasses } from "@/app/lib/data";
-import { useRouter } from "next/navigation"; // Use the Next.js router
+import { useRouter } from "next/navigation";
 import FilterSelect from "@/app/ui/dashboard/records/filterBar/FilterSelect";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
-const ClassesPage = ({ searchParams }) => {
+// This component contains your original logic
+const ClassesContent = ({ searchParams }) => {
   const router = useRouter();
   const [classes, setClasses] = useState([]);
   
   // Since we are now a Client Component, we fetch data inside useEffect 
-  // or pass it as a prop from a parent Server Component.
   useEffect(() => {
     const getData = async () => {
+      // In Next.js 15+, searchParams is a Promise
       const params = await searchParams;
       const gradeFilter = params?.grade || "";
       const data = await fetchClasses(gradeFilter);
@@ -81,4 +82,16 @@ const ClassesPage = ({ searchParams }) => {
   );
 };
 
-export default ClassesPage;
+// This is the default export that Netlify sees. 
+// It wraps the content in Suspense to satisfy the production build requirements.
+export default function ClassesPage(props) {
+  return (
+    <Suspense fallback={
+      <div className={styles.contentWrapper}>
+        <p>Loading Class Data...</p>
+      </div>
+    }>
+      <ClassesContent {...props} />
+    </Suspense>
+  );
+}
