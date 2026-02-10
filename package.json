@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.15.8",
     "@next/eslint-plugin-next": "14.0.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.2",
