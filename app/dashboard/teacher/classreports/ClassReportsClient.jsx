@@ -93,7 +93,7 @@ const ClassReportsClient = ({ user }) => {
                 {reportData?.students?.map((student, idx) => (
                   <tr key={`rank-${student.lrn}-${idx}`}>
                     <td>
-                      <div className={`${styles.rankBadge} ${student.rank === 1 ? styles.gold : student.rank === 2 ? styles.silver : ''}`}>
+                      <div className={`${styles.rankBadge} ${student.rank === 1 ? styles.gold : student.rank === 2 ? styles.silver : student.rank === 3 ? styles.bronze : student.rank >= 4 ? styles.neutral : ''}`}>
                         {student.rank}
                       </div>
                     </td>

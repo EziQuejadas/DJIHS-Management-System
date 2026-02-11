@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // Added for page refresh
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { 
   fetchGradeEntryData, 
   saveGradesToDb, 
   getTeacherDashboardStatsByEmail, 
-  fetchSystemConfig 
+  fetchSystemConfig,
+  updateClassSubmissionStatus,
 } from "@/app/lib/data";
 import styles from "@/app/ui/steacher/gradeentry/gradeentry.module.css";
 
 const GradeEntryClient = ({ user }) => {
+  const router = useRouter();
   const [students, setStudents] = useState([]);
   const [subjects, setSubjects] = useState([]); 
   const [filters, setFilters] = useState({ classid: "", quarter: 1 });
@@ -18,13 +23,14 @@ const GradeEntryClient = ({ user }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockReason, setLockReason] = useState("");
 
-  // Use the email from the user object passed by the Server Page
+  const [showPreview, setShowPreview] = useState(false);
+  const [summary, setSummary] = useState({ passed: 0, failed: 0, average: 0 });
+
   const userEmail = user?.email;
 
-  // 1. Initial Load: Get classes for this specific teacher
+  // 1. Initial Load
   useEffect(() => {
     if (!userEmail) return;
-
     const loadInitialData = async () => {
       const classData = await getTeacherDashboardStatsByEmail(userEmail);
       if (classData && classData.length > 0) {
@@ -36,26 +42,24 @@ const GradeEntryClient = ({ user }) => {
     loadInitialData();
   }, [userEmail]);
 
-  // 2. Lock Logic: Check deadlines whenever Quarter changes
+  // 2. Lock Logic
   useEffect(() => {
     const checkLockStatus = async () => {
       const config = await fetchSystemConfig();
       if (!config) return;
-
       const today = new Date();
       const deadlineField = `q${filters.quarter}_deadline`;
       const deadlineDate = config[deadlineField] ? new Date(config[deadlineField]) : null;
 
       if (!config.is_editing_enabled) {
         setIsLocked(true);
-        setLockReason("Grade editing has been manually disabled by the Registrar.");
+        setLockReason("Grade editing disabled by Registrar.");
       } else if (deadlineDate) {
         const endOfDeadline = new Date(deadlineDate);
         endOfDeadline.setHours(23, 59, 59, 999);
-
         if (today > endOfDeadline) {
           setIsLocked(true);
-          setLockReason(`The deadline for Quarter ${filters.quarter} (${deadlineDate.toLocaleDateString()}) has passed.`);
+          setLockReason(`Quarter ${filters.quarter} deadline passed.`);
         } else {
           setIsLocked(false);
           setLockReason("");
@@ -68,15 +72,17 @@ const GradeEntryClient = ({ user }) => {
     checkLockStatus();
   }, [filters.quarter]);
 
-  // 3. Data Sync: Fetch students when filters change
+  // 3. Fetch & Sort
   useEffect(() => {
     if (!filters.classid) return;
-
     const getData = async () => {
       setLoading(true);
       try {
         const data = await fetchGradeEntryData(filters.classid, filters.quarter);
-        setStudents(data || []);
+        const sortedData = (data || []).sort((a, b) => 
+            a.studentName.toLowerCase().localeCompare(b.studentName.toLowerCase())
+        );
+        setStudents(sortedData);
       } catch (error) {
         console.error("Data fetch error:", error);
       } finally {
@@ -88,7 +94,10 @@ const GradeEntryClient = ({ user }) => {
 
   const handleGradeChange = (gradeid, field, value) => {
     if (isLocked) return;
-    if (value !== "" && (parseFloat(value) < 0 || parseFloat(value) > 100)) return;
+    if (value.length > 6) return; 
+
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue) && (numericValue > 100 || numericValue < 0)) return;
 
     setStudents((prev) =>
       prev.map((s) => {
@@ -100,7 +109,7 @@ const GradeEntryClient = ({ user }) => {
           
           return {
             ...updated,
-            finalgrade: Math.round(final),
+            finalgrade: final, 
             remarks: final >= 75 ? "PASSED" : "FAILED",
           };
         }
@@ -109,15 +118,84 @@ const GradeEntryClient = ({ user }) => {
     );
   };
 
-  const handleSave = async () => {
-    if (students.length === 0 || isLocked) return;
+  const formatOnBlur = (gradeid, field, value) => {
+    if (!value || isNaN(parseFloat(value))) return;
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (s.gradeid === gradeid) {
+          return { ...s, [field]: parseFloat(value).toFixed(2) };
+        }
+        return s;
+      })
+    );
+  };
+
+  const openPreview = () => {
+    if (students.length === 0) return;
+    const passed = students.filter(s => s.remarks === "PASSED").length;
+    const failed = students.length - passed;
+    const totalGrades = students.reduce((acc, s) => acc + (parseFloat(s.finalgrade) || 0), 0);
+    const avg = totalGrades / students.length;
+    
+    setSummary({ passed, failed, average: avg.toFixed(2) });
+    setShowPreview(true);
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const currentSubject = subjects.find(s => s.classid === filters.classid);
+    
+    doc.setFontSize(18);
+    doc.setTextColor(45, 95, 79);
+    doc.text("Grade Summary Report", 14, 20);
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Subject: ${currentSubject?.subject} (${currentSubject?.section})`, 14, 30);
+    doc.text(`Quarter: ${filters.quarter} | Class Avg: ${summary.average}%`, 14, 35);
+
+    const tableRows = students.map(s => [
+      s.lrn,
+      s.studentName.toUpperCase(),
+      parseFloat(s.writtenwork || 0).toFixed(2),
+      parseFloat(s.performancetask || 0).toFixed(2),
+      parseFloat(s.finalgrade || 0).toFixed(2),
+      s.remarks
+    ]);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['LRN', 'Student Name', 'Written', 'Performance', 'Final', 'Remarks']],
+      body: tableRows,
+      headStyles: { fillColor: [45, 95, 79] },
+    });
+
+    doc.save(`${currentSubject?.subject}_Q${filters.quarter}_Grades.pdf`);
+  };
+
+  const handleFinalSave = async () => {
+    setShowPreview(false);
     setIsSaving(true);
+    
+    // 1. Save student grades
     const result = await saveGradesToDb(students);
-    setIsSaving(false);
 
     if (result.success) {
-      alert("✅ Grades saved successfully!");
+      const statusUpdate = await updateClassSubmissionStatus(
+        Number(filters.classid), // Force to Integer
+        filters.quarter,
+        'forwarded'
+      );
+
+      setIsSaving(false);
+
+      if (statusUpdate.success) {
+        alert("✅ Grades submitted successfully and forwarded to Key Teacher!");
+        router.refresh(); // Refresh to update any local status indicators
+      } else {
+        alert("⚠️ Grades saved, but failed to update submission status.");
+      }
     } else {
+      setIsSaving(false);
       alert(`❌ Failed to save: ${result.error}`);
     }
   };
@@ -127,6 +205,7 @@ const GradeEntryClient = ({ user }) => {
       <div className={styles.headerRow}>
         <div className={styles.titleGroup}>
           <h2 className={styles.pageTitle}>Grade Entry Sheet</h2>
+          <p className={styles.subTitle}>S.Y. 2025-2026 | {new Date().toLocaleDateString()}</p>
         </div>
         
         {isLocked && (
@@ -137,14 +216,14 @@ const GradeEntryClient = ({ user }) => {
 
         <div className={styles.filtersSection}>
           <div className={styles.filterGroup}>
-            <label>Subject & Section: </label>
+            <label className={styles.filterLabel}>Subject & Section:  </label>
             <select 
               className={styles.filterSelect}
               value={filters.classid}
               onChange={(e) => setFilters({...filters, classid: e.target.value})}
             >
               {subjects.map((sub) => (
-                <option key={`sub-opt-${sub.classid}`} value={sub.classid}>
+                <option key={sub.classid} value={sub.classid}>
                   {sub.subject} ({sub.section})
                 </option>
               ))}
@@ -152,7 +231,7 @@ const GradeEntryClient = ({ user }) => {
           </div>
 
           <div className={styles.filterGroup}>
-            <label>Quarter: </label>
+            <label className={styles.filterLabel}>Quarter:  </label>
             <select 
               className={styles.filterSelect}
               value={filters.quarter}
@@ -169,46 +248,52 @@ const GradeEntryClient = ({ user }) => {
       
       <div className={styles.gradeTableContainer}>
         {loading ? (
-          <div className={styles.loadingWrapper}>Synchronizing data...</div>
+          <div className={styles.loadingWrapper}>Loading student list...</div>
         ) : (
           <table className={styles.gradeTable}>
             <thead>
               <tr>
                 <th>LRN</th>
                 <th>Student Name</th>
-                <th style={{ width: '130px' }}>Written (40%)</th>
-                <th style={{ width: '130px' }}>Performance (60%)</th>
-                <th style={{ width: '90px' }}>Final</th>
+                <th style={{ width: '140px' }}>Written (40%)</th>
+                <th style={{ width: '140px' }}>Performance (60%)</th>
+                <th style={{ width: '100px' }}>Final</th>
                 <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               {students.length > 0 ? (
-                students.map((s, index) => (
-                  <tr key={`grade-row-${s.enrollmentid || index}`}>
+                students.map((s) => (
+                  <tr key={s.gradeid} className={s.remarks === "FAILED" ? styles.rowFailed : ""}>
                     <td>{s.lrn}</td>
                     <td className={styles.studentName}>{s.studentName}</td>
                     <td>
                       <input 
-                        type="number" 
+                        type="number" step="0.01"
                         className={`${styles.gradeInput} ${isLocked ? styles.inputLocked : ""}`}
                         value={s.writtenwork} 
                         disabled={isLocked}
+                        placeholder="0.00"
                         onChange={(e) => handleGradeChange(s.gradeid, "writtenwork", e.target.value)}
+                        onBlur={(e) => formatOnBlur(s.gradeid, "writtenwork", e.target.value)}
                         onWheel={(e) => e.target.blur()}
                       />
                     </td>
                     <td>
                       <input 
-                        type="number" 
+                        type="number" step="0.01"
                         className={`${styles.gradeInput} ${isLocked ? styles.inputLocked : ""}`}
                         value={s.performancetask} 
                         disabled={isLocked}
+                        placeholder="0.00"
                         onChange={(e) => handleGradeChange(s.gradeid, "performancetask", e.target.value)}
+                        onBlur={(e) => formatOnBlur(s.gradeid, "performancetask", e.target.value)}
                         onWheel={(e) => e.target.blur()}
                       />
                     </td>
-                    <td className={styles.finalGradeCell}>{s.finalgrade}</td>
+                    <td className={styles.finalGradeCell}>
+                       {parseFloat(s.finalgrade || 0).toFixed(2)}
+                    </td>
                     <td>
                       <span className={s.remarks === "PASSED" ? styles.statusPassed : styles.statusFailed}>
                         {s.remarks}
@@ -217,9 +302,7 @@ const GradeEntryClient = ({ user }) => {
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" className={styles.emptyMessage}>No students found.</td>
-                </tr>
+                <tr><td colSpan="6" className={styles.emptyMessage}>No students found.</td></tr>
               )}
             </tbody>
           </table>
@@ -228,13 +311,58 @@ const GradeEntryClient = ({ user }) => {
 
       <div className={styles.footer}>
         <button 
-          onClick={handleSave} 
+          onClick={openPreview} 
           className={isLocked ? styles.btnDisabled : styles.btnPrimary}
           disabled={isSaving || loading || students.length === 0 || isLocked}
         >
-          {isLocked ? "Editing Locked" : isSaving ? "Saving..." : "Save All Changes"}
+          {isLocked ? "Editing Period Ended" : "Preview & Save Changes"}
         </button>
       </div>
+
+      {showPreview && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Grade Preview</h3>
+              <p className={styles.modalDesc}>All grades formatted to 2-decimal precision.</p>
+            </div>
+            
+            <div className={styles.summaryGrid}>
+              <div className={styles.summaryItem}><span>Avg. Grade</span><strong>{summary.average}%</strong></div>
+              <div className={styles.summaryItem}><span>Passed</span><strong className={styles.textSuccess}>{summary.passed}</strong></div>
+              <div className={styles.summaryItem}><span>Failed</span><strong className={styles.textDanger}>{summary.failed}</strong></div>
+            </div>
+
+            <div className={styles.previewListContainer}>
+              <table className={styles.previewTable}>
+                <thead>
+                  <tr><th>Student Name</th><th style={{ textAlign: 'right' }}>Final Grade</th></tr>
+                </thead>
+                <tbody>
+                  {students.map((s) => (
+                    <tr key={`preview-${s.gradeid}`}>
+                      <td>{s.studentName}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span className={s.finalgrade >= 75 ? styles.gradePass : styles.gradeFail}>
+                          {parseFloat(s.finalgrade || 0).toFixed(2)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button onClick={() => setShowPreview(false)} className={styles.btnCancel}>Back</button>
+              <button onClick={generatePDF} className={styles.btnDownload}>Download PDF</button>
+              <button onClick={handleFinalSave} className={styles.btnConfirm} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Confirm & Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

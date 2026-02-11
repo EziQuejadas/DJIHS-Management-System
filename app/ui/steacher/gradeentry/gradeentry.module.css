@@ -3,13 +3,12 @@
     max-width: 100%;
     margin: 0;
     font-family: 'Inter', sans-serif;
-    /* Keeps the whole page from shifting vertically */
     min-height: 100vh; 
 }
 
 .pageTitle {
     color: #2d5f4f;
-    font-size: 26px;
+    font-size: 20px;
     font-weight: 700;
     margin-bottom: 5px;
 }
@@ -78,7 +77,6 @@
 .gradeTable {
     width: 100%;
     border-collapse: collapse;
-    /* CRITICAL: Fixes column widths so they never move during input */
     table-layout: fixed; 
 }
 
@@ -143,12 +141,12 @@
 /* Action Buttons */
 .actionButtons {
     margin-top: 25px;
-    /* Pushes button to the left as seen in your 3rd image */
     display: flex;
     justify-content: flex-start; 
 }
 
 .btnPrimary {
+    margin-top: 10px;
     background-color: #2d5f4f;
     color: white;
     padding: 12px 25px;
@@ -180,9 +178,190 @@
 .btnDisabled {
     background-color: #6c757d;
     cursor: not-allowed;
+    margin-top: 10px;
     padding: 12px 24px;
     color: white;
     border: none;
     border-radius: 6px;
     font-weight: 600;
+}
+
+.footer {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+/* Modal Overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal Box */
+.modalContent {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modalHeader {
+    margin-bottom: 20px;
+}
+
+.modalTitle {
+    color: #2d5f4f;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modalDesc {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+/* Summary Grid (Stats at top of Modal) */
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    background: #f8faf9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #edf2f0;
+}
+
+.summaryItem {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.summaryItem span {
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.summaryItem strong {
+    font-size: 18px;
+    color: #2d5f4f;
+}
+
+/* Scrollable Preview List */
+.previewListContainer {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #edf2f0;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.previewTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.previewTable th {
+    position: sticky;
+    top: 0;
+    background: #f1f5f3;
+    padding: 10px 15px;
+    font-size: 11px;
+    color: #2d5f4f;
+    text-align: left;
+    border-bottom: 1px solid #edf2f0;
+}
+
+.previewTable td {
+    padding: 10px 15px;
+    font-size: 14px;
+    border-bottom: 1px solid #f9fafb;
+}
+
+/* Modal Action Buttons */
+.modalActions {
+    display: flex;
+    gap: 12px;
+}
+
+.btnCancel {
+    flex: 1;
+    padding: 12px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btnCancel:hover {
+    background: #f9fafb;
+}
+
+.btnConfirm {
+    flex: 2;
+    padding: 12px;
+    background: #2d5f4f;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnConfirm:hover {
+    background: #234a3e;
+}
+
+/* Helper Text Colors */
+.textSuccess { color: #1e7e34; }
+.textDanger { color: #d93025; }
+.gradePass { color: #1e7e34; font-weight: 700; }
+.gradeFail { color: #d93025; font-weight: 700; }
+
+/* Highlight Failing Rows in main table */
+.rowFailed {
+    background-color: #fff8f8;
+}
+
+.btnDownload {
+    flex: 1;
+    padding: 12px;
+    background: #475569; /* Slate Gray */
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btnDownload:hover {
+    background: #334155;
+}
+
+/* Adjust modal actions to handle 3 buttons */
+.modalActions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
 }

@@ -11,21 +11,28 @@ const SectionDetailsPage = async ({ params }) => {
 
   const { section, students } = data;
 
+  // SORTING LOGIC: Alphabetical by Last Name, then First Name
+  const sortedStudents = [...students].sort((a, b) => {
+    const nameA = `${a.students.lastname} ${a.students.firstname}`.toLowerCase();
+    const nameB = `${b.students.lastname} ${b.students.firstname}`.toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
   return (
     <div className={styles.contentWrapper}>
       <div className={styles.breadcrumb}>
-            <Link href="/dashboard/classes" className={styles.breadcrumbLink}>
-                Classes
-            </Link> 
-            <span className={styles.separator}>/</span> 
-            <span className={styles.currentPath}>{section.sectionname}</span>
-        </div>    
+        <Link href="/dashboard/classes" className={styles.breadcrumbLink}>
+          Classes
+        </Link>
+        <span className={styles.separator}>/</span>
+        <span className={styles.currentPath}>{section.sectionname}</span>
+      </div>
 
       <div className={styles.sectionHeader}>
-        <h2>Section: {section.sectionname}</h2>
+        <h2 className={styles.pageTitle}>Section: {section.sectionname}</h2>
         <ExportButton 
           sectionName={section.sectionname} 
-          students={students} 
+          students={sortedStudents} 
         />
       </div>
 
@@ -39,8 +46,8 @@ const SectionDetailsPage = async ({ params }) => {
             </tr>
           </thead>
           <tbody>
-            {students.length > 0 ? (
-              students.map((entry) => (
+            {sortedStudents.length > 0 ? (
+              sortedStudents.map((entry) => (
                 <tr key={entry.lrn}>
                   <td>{entry.lrn}</td>
                   <td className={styles.studentName}>
@@ -48,8 +55,8 @@ const SectionDetailsPage = async ({ params }) => {
                     {entry.students.lastname?.toUpperCase()}, {entry.students.firstname} {entry.students.middleinitial ? `${entry.students.middleinitial}.` : ""}
                   </td>
                   <td>
-                    <span className={`${styles.remarkBadge} ${styles[`remark${entry.status.toLowerCase().replace(/\s+/g, '')}`]}`}>
-                      {entry.status.toUpperCase()}
+                    <span className={`${styles.statusBadge} ${styles[`remark${entry.status.toLowerCase().replace(/\s+/g, '')}`]}`}>
+                      {entry.status}
                     </span>
                   </td>
                 </tr>

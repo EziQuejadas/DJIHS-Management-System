@@ -27,7 +27,11 @@ const SettingsClient = ({ user }) => {
     <div className={styles.contentWrapper}>
       <div className={styles.settingsHeader}>
         <h2>Settings</h2>
-        <div className={styles.dateInfo}>Jan. 30, 2026 | S.Y. 2025-26</div>
+        <div className={styles.pageDate}>
+          {new Date().toLocaleDateString('en-US', { 
+            month: 'short', day: '2-digit', year: 'numeric' 
+          })} | S.Y. 2025-26
+        </div>
       </div>
 
       <div className={styles.settingsGrid}>

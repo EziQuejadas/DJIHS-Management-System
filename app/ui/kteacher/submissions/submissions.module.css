@@ -1,5 +1,5 @@
 .container {
-    padding: 30px;
+    padding: 10px;
     background-color: #f8f9fa;
     min-height: 100vh;
 }
@@ -8,11 +8,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 0px;
 }
 
 .pageTitle {
-    font-size: 28px;
+    font-size: 20px;
     color: #2d5f4f;
     font-weight: 600;
 }
@@ -39,14 +39,17 @@
 
 .viewAllBtn {
     padding: 10px 20px;
-    background: transparent;
-    color: #2d5f4f;
+    background: #2d5f4f;
+    color: white;
     border: 2px solid #2d5f4f;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 80px;
 }
 
 .viewAllBtn:hover {
@@ -89,13 +92,40 @@
 
 /* Status Badges */
 .statusBadge {
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 4px 12px;
+    border-radius: 999px; /* This creates the pill shape */
     font-size: 12px;
     font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-block;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Overall Status Colors */
+.statusPending {
+    background-color: #fff3cd; /* Soft Gold */
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.statusCompleted {
+    background-color: #d4edda; /* Soft Green */
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Nested Table Status Colors */
+.statusWaiting {
+    background-color: #f8f9fa; /* Light Gray */
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.statusSubmitted {
+    background-color: #e1f5fe; /* Soft Blue */
+    color: #01579b;
+    border: 1px solid #b3e5fc;
 }
 
 .statusIcon {
@@ -119,3 +149,4 @@
 .actionLink:hover {
     text-decoration: underline;
 }
+

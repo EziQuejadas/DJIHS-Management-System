@@ -246,7 +246,7 @@ export const fetchStudentRecords = async ({ query, grade, section, status, sy })
     console.error("fetchStudentRecords Catch Error:", error);
     return [];
   }
-};
+}
 
 export const fetchFilterOptions = async () => {
   const { data: sections } = await supabase.from('sections').select('sectionname, gradelevel');
@@ -254,37 +254,51 @@ export const fetchFilterOptions = async () => {
   return { sections: sections || [], schoolYears: schoolYears || [] };
 };
 
-export const fetchStudentFullProfile = async (lrn) => {
+export async function fetchStudentFullProfile(lrn) {
   try {
     const { data, error } = await supabase
-      .from('enrollments')
+      .from('students') // Start with students
       .select(`
-        enrollmentid,
         lrn,
-        status,
-        gradelevel,
-        schoolyears (yearrange), 
-        students (firstname, lastname, birthday, address, middleinitial),
-        sections (sectionname),
-        grades (
-          quarter,
-          finalgrade,
-          remarks,
-          classes (
-            subjects (subjectcode, subjectname)
+        lastname,
+        firstname,
+        middleinitial,
+        birthday,
+        address,
+        enrollments (
+          gradelevel,
+          sections (sectionname),
+          grades (
+            gradeid,
+            quarter,
+            finalgrade,
+            remarks,
+            classes (
+              classid,
+              subjectcode,
+              q1_status, q2_status, q3_status, q4_status,
+              subjects (subjectname, subjectcode)
+            )
           )
         )
       `)
       .eq('lrn', lrn)
-      .maybeSingle();
+      .single();
 
     if (error) throw error;
-    return data;
-  } catch (err) {
-    console.error("Database Error:", err);
+
+    // We need to flatten the data slightly because we changed the starting table
+    return {
+      ...data,
+      // Map the nested enrollment data to match your Page JSX
+      sections: data.enrollments?.[0]?.sections || null,
+      grades: data.enrollments?.[0]?.grades || []
+    };
+  } catch (error) {
+    console.error("Fetcher Error:", error);
     return null;
   }
-};
+}
 
 export const fetchClasses = async (grade) => {
   try {
@@ -500,16 +514,11 @@ export const registerUser = async (prevState, formData) => {
 };
 
 export const fetchGradeEntryData = async (classid, quarter) => {
-  // 1. Force classid to be a number to prevent the "invalid input syntax" error
   const cleanId = parseInt(classid);
-  
-  if (isNaN(cleanId)) {
-    console.error("Invalid Class ID provided to fetcher:", classid);
-    return [];
-  }
+  if (isNaN(cleanId)) return [];
 
   try {
-    // 2. Get the section linked to this class
+    // 1. Get the section linked to this class
     const { data: classData, error: classError } = await supabase
       .from('classes')
       .select('sectionid')
@@ -518,48 +527,51 @@ export const fetchGradeEntryData = async (classid, quarter) => {
 
     if (classError || !classData) return [];
 
-    // 3. Get the students
+    // 2. Get students via enrollments
     const { data: enrolledStudents, error: enrollError } = await supabase
       .from('enrollments')
       .select(`
         enrollmentid,
         lrn,
-        students (
-          firstname,
-          lastname
-        )
+        students (firstname, lastname)
       `)
       .eq('sectionid', classData.sectionid);
 
     if (enrollError) throw enrollError;
 
-    // 4. Get existing grades
+    // 3. Get existing grades
     const { data: existingGrades } = await supabase
       .from('grades')
       .select('*')
       .eq('classid', cleanId)
       .eq('quarter', quarter);
 
-    // 5. Merge
+    // 4. Merge and RE-CALCULATE (to ensure matching logic)
     return (enrolledStudents || []).map(enrollment => {
       const studentGrade = existingGrades?.find(g => g.enrollmentid === enrollment.enrollmentid);
       
+      // Pull raw values
+      const ww = parseFloat(studentGrade?.writtenwork) || 0;
+      const pt = parseFloat(studentGrade?.performancetask) || 0;
+      
+      // RE-APPLY THE 40/60 FORMULA (Matches GradeEntryClient.jsx)
+      const calculatedFinal = (ww * 0.4) + (pt * 0.6);
+
       return {
-        // Fallback to enrollmentid if no gradeid exists yet
         gradeid: studentGrade?.gradeid || `temp-${enrollment.enrollmentid}`, 
         enrollmentid: enrollment.enrollmentid,
-        lrn: enrollment.lrn,
+        lrn: enrollment.lrn?.trim(), // trim to handle 'character' type padding
         studentName: enrollment.students 
           ? `${enrollment.students.lastname}, ${enrollment.students.firstname}`
           : "Unknown Student",
-        writtenwork: studentGrade?.writtenwork ?? "",
-        performancetask: studentGrade?.performancetask ?? "",
-        finalgrade: studentGrade?.finalgrade || "0",
-        remarks: studentGrade?.remarks || "PENDING",
+        writtenwork: ww,
+        performancetask: pt,
+        finalgrade: calculatedFinal, // Use calculated value for consistency
+        remarks: calculatedFinal >= 75 ? "PASSED" : "FAILED",
         classid: cleanId,
         quarter: parseInt(quarter)
       };
-    });
+    }).sort((a, b) => a.studentName.localeCompare(b.studentName)); // Keep sorting consistent
   } catch (error) {
     console.error("fetchGradeEntryData error:", error);
     return [];
@@ -956,58 +968,86 @@ export const fetchGradeSummary = async () => {
   }
 };
 
-export const fetchSubmissionStatuses = async (quarter = 1) => {
+export async function fetchSubmissionStatuses(quarter) {
   try {
-    const { data: classes, error: classError } = await supabase
+    const statusCol = `q${quarter}_submission_status`;
+    
+    const { data, error } = await supabase
       .from('classes')
       .select(`
         classid,
-        verification_status,
-        subjects(subjectname),
-        teachers(firstname, lastname, email),
-        sections(sectionname)
+        ${statusCol},
+        teachers (firstname, lastname),
+        subjects (subjectname),
+        sections (sectionname)
       `);
 
-    if (classError) throw classError;
+    if (error) throw error;
 
-    return classes.map(cls => ({
-      id: cls.classid,
-      teacher: `${cls.teachers?.firstname} ${cls.teachers?.lastname}`,
-      email: cls.teachers?.email,
-      subject: cls.subjects?.subjectname,
-      section: cls.sections?.sectionname,
-      status: cls.verification_status || 'notstarted',
-      pendingCount: 0 // You can add your actual calculation logic here
+    return data.map(item => ({
+      teacher: `${item.teachers?.firstname} ${item.teachers?.lastname}`,
+      subject: item.subjects?.subjectname,
+      section: item.sections?.sectionname,
+      status: item[statusCol] || 'notstarted', // This feeds your 'isSubmitted' logic
     }));
   } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch submission data.");
+    console.error('Fetch Error:', error.message);
+    return [];
   }
-};
+}
 
-export const fetchVerificationData = async (quarter = 1) => {
-  const { data, error } = await supabase
-    .from('classes')
-    .select(`
-      classid,
-      subjectcode,
-      subjects (subjectname),
-      teachers (firstname, lastname),
-      sections (sectionname),
-      verification_status, 
-      last_submitted
-    `);
+export const fetchVerificationData = async (quarter) => {
+  try {
+    const subField = `q${quarter}_submission_status`; // Teacher's Column (e.g., q1_submission_status)
+    const verField = `q${quarter}_status`;            // Key Teacher's Column (e.g., q1_status)
+    
+    const { data, error } = await supabase
+      .from('classes')
+      .select(`
+        classid, 
+        ${subField}, 
+        ${verField}, 
+        last_submitted, 
+        subjects(subjectname), 
+        sections(sectionname), 
+        teachers(firstname, lastname)
+      `);
 
-  if (error) throw error;
+    if (error) throw error;
 
-  return data.map(item => ({
-    id: item.classid,
-    name: `${item.teachers?.firstname} ${item.teachers?.lastname}`,
-    subject: item.subjects?.subjectname,
-    section: item.sections?.sectionname,
-    date: item.last_submitted || '--',
-    status: item.verification_status || 'notstarted' 
-  }));
+    return data.map(item => {
+      let currentStatus = 'notstarted';
+
+      // PRIORITY 1: Check if the Key Teacher's column explicitly says 'resubmitted'
+      if (item[verField] === 'resubmitted') {
+        currentStatus = 'resubmitted'; 
+      } 
+      // PRIORITY 2: Check if already forwarded to Registrar
+      else if (item[verField] === 'completed') {
+        currentStatus = 'completed'; 
+      } 
+      // PRIORITY 3: Check if Key Teacher is currently in the middle of verifying
+      else if (item[verField] === 'review') {
+        currentStatus = 'review';    
+      } 
+      // PRIORITY 4: If none of the above, check if the teacher just forwarded it
+      else if (item[subField] === 'forwarded') {
+        currentStatus = 'submitted'; 
+      }
+
+      return {
+        id: item.classid,
+        name: `${item.teachers.lastname}, ${item.teachers.firstname}`,
+        subject: item.subjects.subjectname,
+        section: item.sections.sectionname,
+        status: currentStatus, 
+        date: item.last_submitted 
+      };
+    });
+  } catch (err) {
+    console.error("Fetcher Error:", err);
+    return [];
+  }
 };
 
 // Fetch the current global configuration
@@ -1179,3 +1219,40 @@ export const getTotalCounts = async () => {
     return { students: 0, teachers: 0 };
   }
 };
+
+export async function updateClassSubmissionStatus(classid, quarter, status) {
+  try {
+    const subColumn = `q${quarter}_submission_status`; // Teacher's column
+    const verColumn = `q${quarter}_status`;            // Key Teacher's column
+
+    // 1. Fetch current verification status
+    const { data: currentStatus } = await supabase
+      .from('classes')
+      .select(verColumn)
+      .eq('classid', classid)
+      .single();
+
+    let verificationUpdate = {};
+
+    // 2. Logic: If it was ALREADY completed, change it to 'resubmitted'
+    // This forces the Key Teacher to see a "Red" status.
+    if (currentStatus && currentStatus[verColumn] === 'completed') {
+      verificationUpdate = { [verColumn]: 'resubmitted' };
+    }
+
+    // 3. Update database
+    const { error } = await supabase
+      .from('classes')
+      .update({ 
+        [subColumn]: status, // 'forwarded'
+        ...verificationUpdate, 
+        last_submitted: new Date().toISOString() 
+      })
+      .eq('classid', classid);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}

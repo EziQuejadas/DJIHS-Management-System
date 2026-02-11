@@ -27,8 +27,16 @@ const RecordsPage = ({ searchParams }) => {
     const loadData = async () => {
       setLoading(true);
       const students = await fetchStudentRecords({ query, grade, section, status, sy });
+      const sortedStudents = [...students].sort((a, b) => {
+        const nameA = `${a.students.lastname} ${a.students.firstname}`.toLowerCase();
+        const nameB = `${b.students.lastname} ${b.students.firstname}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
       const { sections, schoolYears } = await fetchFilterOptions();
-      setData({ students, sections, schoolYears });
+      
+      // Update data with the sorted list
+      setData({ students: sortedStudents, sections, schoolYears });
       setLoading(false);
     };
     loadData();

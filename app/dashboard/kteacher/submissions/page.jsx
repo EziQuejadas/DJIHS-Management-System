@@ -4,161 +4,135 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchSubmissionStatuses } from '@/app/lib/data';
 import styles from '@/app/ui/kteacher/submissions/submissions.module.css';
 
-/**
- * Sub-component for individual table rows
- * Now dynamically reacts to the verification_status in your database
- */
-const SubmissionRow = ({ data }) => {
-  const getStatusBadge = () => {
-    switch (data.status) {
-      case 'forwarded':
-        return (
-          <span className={`${styles.statusBadge} ${styles.statusCompleted}`}>
-            <span className={styles.statusIcon}></span>
-            Forwarded
-          </span>
-        );
-      case 'review':
-        return (
-          <span className={`${styles.statusBadge} ${styles.statusPending}`} style={{ backgroundColor: '#3b82f6' }}>
-            <span className={styles.statusIcon}></span>
-            In Review
-          </span>
-        );
-      case 'completed':
-        return (
-          <span className={`${styles.statusBadge} ${styles.statusCompleted}`}>
-            <span className={styles.statusIcon}></span>
-            Completed
-          </span>
-        );
-      case 'pending':
-      case 'inprogress':
-        return (
-          <span className={`${styles.statusBadge} ${styles.statusPending}`}>
-            <span className={styles.statusIcon}></span>
-            {data.pendingCount > 0 ? `${data.pendingCount} pending` : 'In Progress'}
-          </span>
-        );
-      default:
-        return (
-          <span className={`${styles.statusBadge} ${styles.statusNotStarted}`}>
-            <span className={styles.statusIcon}></span>
-            Not Started
-          </span>
-        );
-    }
-  };
+const TeacherRow = ({ teacher, classes }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleReminder = (e) => {
-    e.preventDefault();
-    if (data.email) {
-      navigator.clipboard.writeText(data.email);
-      alert(`Email copied to clipboard: ${data.email}\nYou can now paste it into your email.`);
-    } else {
-      alert("No email available for this teacher.");
-    }
-  };
+  // Calculate stats for this specific teacher
+  const totalClasses = classes.length;
+  const submittedClasses = classes.filter(c => ['forwarded', 'completed'].includes(c.status)).length;
+  const isFullyDone = totalClasses === submittedClasses;
 
   return (
-    <tr>
-      <td>{data.teacher}</td>
-      <td>{data.subject}</td>
-      <td>{data.section}</td>
-      <td>{getStatusBadge()}</td>
-      <td>
-        {['forwarded', 'completed'].includes(data.status) ? (
-          <span className={styles.doneText}>Verified ✓</span>
-        ) : (
-          <button 
-            className={styles.actionLink} 
-            onClick={handleReminder}
-            style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            Send Reminder
-          </button>
-        )}
-      </td>
-    </tr>
+    <>
+      <tr 
+        onClick={() => setIsOpen(!isOpen)} 
+        style={{ cursor: 'pointer', backgroundColor: isOpen ? '#f8fafc' : 'transparent' }}
+      >
+        <td>
+          <span style={{ marginRight: '10px' }}>{isOpen ? '▼' : '▶'}</span>
+          <strong>{teacher}</strong>
+        </td>
+        <td style={{ textAlign: 'center' }}>{totalClasses}</td>
+        <td style={{ textAlign: 'center' }}>
+          <span style={{ color: isFullyDone ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
+            {submittedClasses} / {totalClasses}
+          </span>
+        </td>
+        <td>
+          {/* Main Status Badge */}
+          <span className={`${styles.statusBadge} ${isFullyDone ? styles.statusCompleted : styles.statusPending}`}>
+            {isFullyDone ? 'Completed' : 'Pending'}
+          </span>
+        </td>
+      </tr>
+      
+      {/* Detailed View - Only shows when row is clicked */}
+      {isOpen && (
+        <tr>
+          <td colSpan="4" style={{ padding: '0 0 20px 40px', backgroundColor: '#f8fafc' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#64748b' }}>
+                  <th style={{ padding: '8px' }}>Subject</th>
+                  <th style={{ padding: '8px' }}>Section</th>
+                  <th style={{ padding: '8px' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classes.map((cls, idx) => {
+                  const isSubmitted = ['forwarded', 'completed'].includes(cls.status);
+                  return (
+                    <tr key={idx}>
+                      <td>{cls.subject}</td>
+                      <td>{cls.section}</td>
+                      <td>
+                        {/* Nested Table Badges */}
+                        <span className={`${styles.statusBadge} ${isSubmitted ? styles.statusSubmitted : styles.statusWaiting}`}>
+                          {isSubmitted ? 'Submitted' : 'Waiting'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
-/**
- * Main Submissions Page Component
- * Exported as a default function to avoid Next.js "Server Action" confusion
- */
 export default function SubmissionsPage() {
-  const [submissionsData, setSubmissionsData] = useState([]);
+  const [groupedData, setGroupedData] = useState({});
   const [loading, setLoading] = useState(true);
   const [quarter, setQuarter] = useState(1);
 
-  // loadData is wrapped in useCallback to ensure stability
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchSubmissionStatuses(quarter);
-      setSubmissionsData(data || []);
+      const rawData = await fetchSubmissionStatuses(quarter);
+      
+      // GROUPING ALGORITHM: Turn flat list into { "Teacher Name": [class1, class2] }
+      const grouped = rawData.reduce((acc, item) => {
+        if (!acc[item.teacher]) acc[item.teacher] = [];
+        acc[item.teacher].push(item);
+        return acc;
+      }, {});
+
+      setGroupedData(grouped);
     } catch (err) {
-      console.error("Failed to load submission data:", err);
-      setSubmissionsData([]);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, [quarter]);
 
-  // Initial load and reload when quarter changes
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
-        <h2 className={styles.pageTitle}>Grade Submission Status</h2>
+        <h2 className={styles.pageTitle}>Teacher Submission Overview</h2>
         <div className={styles.headerActions}>
-          <select 
-            className={styles.filterDropdown}
-            value={quarter}
-            onChange={(e) => setQuarter(parseInt(e.target.value))}
-          >
+          <select className={styles.filterDropdown}value={quarter} onChange={(e) => setQuarter(parseInt(e.target.value))}>
             <option value={1}>Quarter 1</option>
             <option value={2}>Quarter 2</option>
             <option value={3}>Quarter 3</option>
             <option value={4}>Quarter 4</option>
           </select>
-          <button className={styles.viewAllBtn} onClick={loadData}>
-            Refresh
-          </button>
+          <button className={styles.viewAllBtn} onClick={loadData}>Refresh</button>
         </div>
       </div>
 
       <div className={styles.submissionsContainer}>
-        {loading ? (
-          <div className={styles.loadingWrapper}>
-            <p className={styles.loadingText}>Fetching database records...</p>
-          </div>
-        ) : (
+        {loading ? <p>Loading teachers...</p> : (
           <table className={styles.submissionsTable}>
             <thead>
               <tr>
                 <th>Teacher Name</th>
-                <th>Subject</th>
-                <th>Section</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th style={{ textAlign: 'center' }}>Total Subjects</th>
+                <th style={{ textAlign: 'center' }}>Progress</th>
+                <th>Overall Status</th>
               </tr>
             </thead>
             <tbody>
-              {submissionsData.length > 0 ? (
-                submissionsData.map((item) => (
-                  <SubmissionRow key={item.id} data={item} />
+              {Object.keys(groupedData).length > 0 ? (
+                Object.entries(groupedData).map(([teacherName, classes]) => (
+                  <TeacherRow key={teacherName} teacher={teacherName} classes={classes} />
                 ))
               ) : (
-                <tr>
-                  <td colSpan="5" className={styles.emptyRow}>
-                    No records found for Quarter {quarter}.
-                  </td>
-                </tr>
+                <tr><td colSpan="4">No data available for this quarter.</td></tr>
               )}
             </tbody>
           </table>

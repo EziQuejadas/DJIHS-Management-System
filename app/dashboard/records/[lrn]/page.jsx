@@ -10,13 +10,23 @@ const StudentProfile = async ({ params }) => {
 
   if (!data) return <div className={styles.contentWrapper}>Record not found.</div>;
 
-  // Aggregate separate quarter rows into a single subject object
   const subjectsMap = {};
+  let hasPendingGrades = false;
 
-  data.grades?.forEach((g) => {
-    // Accessing subjectname through the classes relationship based on your schema
-    const sCode = g.classes?.subjects?.subjectcode || "Unknown";
-    const sName = g.classes?.subjects?.subjectname || "";
+  // Since fetcher now returns grades directly in the root or data.grades
+  const gradesToProcess = data.grades || [];
+
+  gradesToProcess.forEach((g) => {
+    const statusField = `q${g.quarter}_status`;
+    const isCompleted = g.classes?.[statusField] === 'completed';
+
+    if (!isCompleted) {
+      hasPendingGrades = true;
+      return; 
+    }
+
+    const sCode = g.classes?.subjects?.subjectcode || "N/A";
+    const sName = g.classes?.subjects?.subjectname || "Unknown Subject";
     
     if (!subjectsMap[sCode]) {
       subjectsMap[sCode] = { 
@@ -29,12 +39,11 @@ const StudentProfile = async ({ params }) => {
       };
     }
     
-    // Assign finalgrade to the correct quarter column (q1, q2, q3, q4)
-    subjectsMap[sCode][`q${g.quarter}`] = g.finalgrade;
-    subjectsMap[sCode].total += g.finalgrade;
+    const val = parseFloat(g.finalgrade) || 0;
+    subjectsMap[sCode][`q${g.quarter}`] = val.toFixed(2);
+    subjectsMap[sCode].total += val;
     subjectsMap[sCode].count += 1;
     
-    // If any single quarter is failing, update remarks
     if (g.remarks === 'Failed') subjectsMap[sCode].remarks = 'Failed';
   });
 
@@ -44,7 +53,12 @@ const StudentProfile = async ({ params }) => {
     <div className={styles.contentWrapper}>
       <div className={styles.profileContainer}>
         <div className={styles.profileHeader}>
-          <BackButton /> 
+          <BackButton />
+          {hasPendingGrades && (
+            <div className={styles.pendingAlert}>
+              <span>ℹ️ Some grades are hidden pending Key Teacher verification.</span>
+            </div>
+          )}
         </div>
 
         <div className={styles.profileCard}>
@@ -56,43 +70,38 @@ const StudentProfile = async ({ params }) => {
               </div>
               <div className={styles.infoItem}>
                 <div className={styles.infoLabel}>Student Name</div>
+                {/* UPDATED: Pulling directly from data root */}
                 <div className={styles.infoValue}>
-                  {data.students?.lastname?.toUpperCase()}, {data.students?.firstname} {data.students?.middleinitial ? `${data.students.middleinitial}.` : ''}
+                  {data.lastname?.toUpperCase()}, {data.firstname} {data.middleinitial ? `${data.middleinitial}.` : ''}
                 </div>
               </div>
               <div className={styles.infoItem}>
-                <div className={styles.infoLabel}>Birth Date</div>
-                <div className={styles.infoValue}>
-                  {/* Updated to use 'birthday' based on your schema check */}
-                  {data.students?.birthday ? new Date(data.students.birthday).toLocaleDateString() : 'N/A'}
-                </div>
-              </div>
-              <div className={styles.infoItem}>
-                <div className={styles.infoLabel}>Sex</div>
-                <div className={styles.infoValue}>{data.students?.sex || 'N/A'}</div>
+                <div className={styles.infoLabel}>Section</div>
+                <div className={styles.infoValue}>{data.sections?.sectionname || 'Unassigned'}</div>
               </div>
               <div className={`${styles.infoItem} ${styles.fullWidth}`}>
                 <div className={styles.infoLabel}>Address</div>
-                <div className={styles.infoValue}>{data.students?.address || "No Address Recorded"}</div>
-              </div>
-              <div className={styles.infoItem}>
-                <div className={styles.infoLabel}>Current Section</div>
-                <div className={styles.infoValue}>{data.sections?.sectionname || 'Unassigned'}</div>
+                <div className={styles.infoValue}>{data.address || "No Address Recorded"}</div>
               </div>
             </div>
 
             <div className={styles.schoolLogo}>
-              <Image src="/DJIHS_Logo.png" alt="School Logo" width={200} height={200} />
+              <Image src="/DJIHS_Logo.png" alt="School Logo" width={150} height={150} priority />
             </div>
           </div>
+
+          <hr className={styles.divider} />
 
           <div className={styles.gradesSection}>
             <table className={styles.gradesTable}>
               <thead>
                 <tr>
                   <th>Subject</th>
-                  <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>
-                  <th>Final</th>
+                  <th className={styles.textCenter}>Q1</th>
+                  <th className={styles.textCenter}>Q2</th>
+                  <th className={styles.textCenter}>Q3</th>
+                  <th className={styles.textCenter}>Q4</th>
+                  <th className={styles.textCenter}>Final</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -102,14 +111,17 @@ const StudentProfile = async ({ params }) => {
                     const finalAvg = grade.count > 0 ? (grade.total / grade.count).toFixed(2) : '-';
                     return (
                       <tr key={index}>
-                        <td>{grade.name}</td>
-                        <td>{grade.q1}</td>
-                        <td>{grade.q2}</td>
-                        <td>{grade.q3}</td>
-                        <td>{grade.q4}</td>
-                        <td>{finalAvg}</td>
                         <td>
-                          <span className={grade.remarks === 'Passed' ? styles.remarkPassed : styles.remarkFailed}>
+                          <div className={styles.subjectName}>{grade.fullName}</div>
+                          <div className={styles.subjectCode}>{grade.name}</div>
+                        </td>
+                        <td className={styles.textCenter}>{grade.q1}</td>
+                        <td className={styles.textCenter}>{grade.q2}</td>
+                        <td className={styles.textCenter}>{grade.q3}</td>
+                        <td className={styles.textCenter}>{grade.q4}</td>
+                        <td className={styles.textCenter} style={{fontWeight: 'bold'}}>{finalAvg}</td>
+                        <td>
+                          <span className={grade.remarks === 'Passed' ? styles.badgePassed : styles.badgeFailed}>
                             {grade.remarks}
                           </span>
                         </td>
@@ -118,7 +130,7 @@ const StudentProfile = async ({ params }) => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>No grades recorded yet.</td>
+                    <td colSpan="7" className={styles.emptyState}>No verified grades found.</td>
                   </tr>
                 )}
               </tbody>
@@ -126,7 +138,7 @@ const StudentProfile = async ({ params }) => {
           </div>
 
           <div className={styles.actionSection}>
-            <GradeModal student={data} />
+            <GradeModal student={data} verifiedGrades={processedGrades} />
           </div>
         </div>
       </div>

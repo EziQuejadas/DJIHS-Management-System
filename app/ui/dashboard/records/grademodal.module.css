@@ -9,6 +9,130 @@
     transition: opacity 0.2s ease;
 }
 
-.generateBtn:hover {
-    opacity: 0.9;
+.generateBtn:hover { opacity: 0.9; }
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modalContent {
+  background: white; width: 450px; border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden;
+}
+
+.modalHeader {
+  background: #2D5F5D; color: white;
+  padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+}
+
+.closeX { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+
+.modalBody { padding: 20px; }
+
+.requestSummary {
+  background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+}
+
+.summaryItem { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.summaryItem label { color: #666; font-weight: 500; }
+.summaryItem span { font-weight: 700; color: #333; }
+
+.formGroup { margin-bottom: 20px; }
+.formGroup label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 600; color: #444; }
+
+.formControl { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+
+.disclaimer { color: #ed6c02; background: #fff4e5; padding: 8px; border-radius: 4px; text-align: center; font-size: 12px; }
+
+.modalFooter { padding: 15px 20px; background: #f8f9fa; display: flex; justify-content: flex-end; gap: 10px; }
+
+.btnCancel { padding: 8px 16px; background: #ccc; border: none; border-radius: 4px; cursor: pointer; }
+
+.btnSubmit {
+  padding: 8px 20px; background: #2D5F5D; color: white;
+  border: none; border-radius: 4px; cursor: pointer; font-weight: 600;
+}
+
+/* --- PRINTING LOGIC --- */
+.printContainer { display: none; }
+
+@media print {
+    :global(body) * { visibility: hidden; }
+    .printContainer, .printContainer * { visibility: visible; }
+
+    .printContainer {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0; width: 7.5in;
+        padding: 0.2in;
+        color: black; background: white;
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .f138Header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 20pt;
+        border-bottom: 2px solid black;
+        padding-bottom: 10pt;
+    }
+
+    .logoWrapper { width: 1in; display: flex; justify-content: center; }
+    .headerText { flex: 1; }
+    .headerText p { font-size: 10pt; margin: 0; line-height: 1.2; }
+    .schoolName { font-size: 14pt; margin: 5pt 0; font-weight: bold; }
+
+    .f138StudentInfo { width: 100%; margin-bottom: 15pt; font-size: 11pt; }
+
+    .infoRow {
+        display: flex; justify-content: space-between;
+        margin-bottom: 5pt; border-bottom: 1px solid #000;
+    }
+
+    .f138Table { width: 100%; border: 1.5pt solid black; border-collapse: collapse; margin-bottom: 15pt; }
+
+    .f138Table th, .f138Table td { border: 1px solid black; padding: 4pt 6pt; font-size: 10pt; text-align: center; }
+
+    .f138Table th:nth-child(n+2), .f138Table td:nth-child(n+2) { width: 40pt; }
+
+    .bold { font-weight: bold; }
+    
+    @page { size: auto; margin: 0.5in; }
+    .tableHeaderBlue {
+    background-color: #e8f0fe !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .legendContainer {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10pt;
+    font-size: 9pt;
+    border-top: 1px solid black;
+    padding-top: 5pt;
+  }
+
+  .legendSection {
+    line-height: 1.4;
+  }
+
+  .legendSection p {
+    margin: 0;
+  }
+  
+  .reportTitle {
+    text-align: center;
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 15pt 0 5pt 0;
+    text-transform: uppercase;
+  }
 }
