@@ -287,7 +287,6 @@ export async function fetchStudentFullProfile(lrn) {
 
     if (error) throw error;
 
-    // We need to flatten the data slightly because we changed the starting table
     return {
       ...data,
       // Map the nested enrollment data to match your Page JSX
@@ -1065,16 +1064,6 @@ export const fetchSystemConfig = async () => {
   return data;
 };
 
-// Update the configuration
-export const updateSystemConfig = async (configUpdates) => {
-  const { error } = await supabase
-    .from('system_config')
-    .upsert({ id: 1, ...configUpdates, updated_at: new Date() });
-
-  if (error) return { success: false, error: error.message };
-  return { success: true };
-};
-
 export const fetchGradeDistribution = async () => {
   try {
     const { data, error } = await supabase
@@ -1251,6 +1240,125 @@ export async function updateClassSubmissionStatus(classid, quarter, status) {
       .eq('classid', classid);
 
     if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function unlockClassSubmission(classId, quarter) {
+  try {
+    const user = await getSessionUser();
+    const adminName = user 
+      ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username 
+      : "Unknown Admin";
+
+    const statusColumn = `q${quarter}_status`;
+    
+    const { error } = await supabase
+      .from('classes')
+      .update({ [statusColumn]: 'submitted' }) // Revert 'completed' to 'submitted'
+      .eq('classid', classId);
+
+    if (error) throw error;
+
+    await supabase.from('audit_logs').insert({
+      action: 'MANUAL_UNLOCK',
+      performed_by_name: adminName,
+      target_id: classId.toString(),
+      details: `Reopened Q${quarter} for Class ID: ${classId}`
+    });
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function fetchAuditLogs() {
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("Error fetching logs:", error);
+    return [];
+  }
+  return data;
+}
+
+// Custom log function (Reusable for other parts of the app)
+export async function createAuditLog(action, details, targetId = null) {
+  const user = await getSessionUser(); // Using your existing function
+  
+  // Format the name from your 'users' table columns
+  const adminName = user 
+    ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username 
+    : "System Admin";
+
+  const { error } = await supabase.from('audit_logs').insert({
+    action,
+    performed_by_name: adminName,
+    details,
+    target_id: targetId?.toString()
+  });
+  
+  if (error) console.error("Log failed:", error);
+}
+
+// Updated Update function
+export async function updateSystemConfig(config) {
+  try {
+    const { error } = await supabase
+      .from('system_config')
+      .update({
+        active_sy: config.active_sy,
+        q1_deadline: config.q1_deadline,
+        q2_deadline: config.q2_deadline,
+        q3_deadline: config.q3_deadline,
+        q4_deadline: config.q4_deadline,
+        is_editing_enabled: config.is_editing_enabled
+      })
+      .eq('id', 1);
+
+    if (error) throw error;
+
+    // Call the smart log function
+    await createAuditLog(
+      'CONFIG_UPDATE', 
+      `SY: ${config.active_sy}, Lock: ${config.is_editing_enabled}`
+    );
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function clearAuditLogs() {
+  try {
+    const user = await getSessionUser();
+    const adminName = user 
+      ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username 
+      : "System Admin";
+
+    // Delete all logs
+    const { error } = await supabase
+      .from('audit_logs')
+      .delete()
+      .neq('id', 0); // Standard way to target all rows
+
+    if (error) throw error;
+
+    // Immediately create a new entry recording the wipe
+    await supabase.from('audit_logs').insert({
+      action: 'LOGS_CLEARED',
+      performed_by_name: adminName,
+      details: `The audit log history was manually cleared.`
+    });
+
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

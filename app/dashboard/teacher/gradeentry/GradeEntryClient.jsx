@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Added for page refresh
+import { useRouter } from "next/navigation"; 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { 
@@ -24,11 +24,11 @@ const GradeEntryClient = ({ user }) => {
   const [lockReason, setLockReason] = useState("");
 
   const [showPreview, setShowPreview] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false); // Track if grades are confirmed
   const [summary, setSummary] = useState({ passed: 0, failed: 0, average: 0 });
 
   const userEmail = user?.email;
 
-  // 1. Initial Load
   useEffect(() => {
     if (!userEmail) return;
     const loadInitialData = async () => {
@@ -42,7 +42,6 @@ const GradeEntryClient = ({ user }) => {
     loadInitialData();
   }, [userEmail]);
 
-  // 2. Lock Logic
   useEffect(() => {
     const checkLockStatus = async () => {
       const config = await fetchSystemConfig();
@@ -72,7 +71,6 @@ const GradeEntryClient = ({ user }) => {
     checkLockStatus();
   }, [filters.quarter]);
 
-  // 3. Fetch & Sort
   useEffect(() => {
     if (!filters.classid) return;
     const getData = async () => {
@@ -83,6 +81,7 @@ const GradeEntryClient = ({ user }) => {
             a.studentName.toLowerCase().localeCompare(b.studentName.toLowerCase())
         );
         setStudents(sortedData);
+        setIsSubmitted(false); // Reset on new class/quarter selection
       } catch (error) {
         console.error("Data fetch error:", error);
       } finally {
@@ -95,6 +94,8 @@ const GradeEntryClient = ({ user }) => {
   const handleGradeChange = (gradeid, field, value) => {
     if (isLocked) return;
     if (value.length > 6) return; 
+
+    setIsSubmitted(false); // Lock PDF button again if any edit occurs
 
     const numericValue = parseFloat(value);
     if (!isNaN(numericValue) && (numericValue > 100 || numericValue < 0)) return;
@@ -142,6 +143,7 @@ const GradeEntryClient = ({ user }) => {
   };
 
   const generatePDF = () => {
+    if (!isSubmitted) return; // Logic safeguard
     const doc = new jsPDF();
     const currentSubject = subjects.find(s => s.classid === filters.classid);
     
@@ -173,15 +175,12 @@ const GradeEntryClient = ({ user }) => {
   };
 
   const handleFinalSave = async () => {
-    setShowPreview(false);
     setIsSaving(true);
-    
-    // 1. Save student grades
     const result = await saveGradesToDb(students);
 
     if (result.success) {
       const statusUpdate = await updateClassSubmissionStatus(
-        Number(filters.classid), // Force to Integer
+        Number(filters.classid), 
         filters.quarter,
         'forwarded'
       );
@@ -189,8 +188,9 @@ const GradeEntryClient = ({ user }) => {
       setIsSaving(false);
 
       if (statusUpdate.success) {
+        setIsSubmitted(true); // Unlock PDF Button
         alert("✅ Grades submitted successfully and forwarded to Key Teacher!");
-        router.refresh(); // Refresh to update any local status indicators
+        // Note: modal does NOT close here
       } else {
         alert("⚠️ Grades saved, but failed to update submission status.");
       }
@@ -292,7 +292,7 @@ const GradeEntryClient = ({ user }) => {
                       />
                     </td>
                     <td className={styles.finalGradeCell}>
-                       {parseFloat(s.finalgrade || 0).toFixed(2)}
+                        {parseFloat(s.finalgrade || 0).toFixed(2)}
                     </td>
                     <td>
                       <span className={s.remarks === "PASSED" ? styles.statusPassed : styles.statusFailed}>
@@ -324,7 +324,9 @@ const GradeEntryClient = ({ user }) => {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Grade Preview</h3>
-              <p className={styles.modalDesc}>All grades formatted to 2-decimal precision.</p>
+              <p className={styles.modalDesc}>
+                {isSubmitted ? "Submission Successful. You can now download the PDF." : "All grades formatted to 2-decimal precision."}
+              </p>
             </div>
             
             <div className={styles.summaryGrid}>
@@ -354,10 +356,30 @@ const GradeEntryClient = ({ user }) => {
             </div>
 
             <div className={styles.modalActions}>
-              <button onClick={() => setShowPreview(false)} className={styles.btnCancel}>Back</button>
-              <button onClick={generatePDF} className={styles.btnDownload}>Download PDF</button>
-              <button onClick={handleFinalSave} className={styles.btnConfirm} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Confirm & Save"}
+              <button 
+                onClick={() => {
+                   setShowPreview(false);
+                   if (isSubmitted) router.refresh();
+                }} 
+                className={styles.btnCancel}
+              >
+                {isSubmitted ? "Close" : "Back"}
+              </button>
+              
+              <button 
+                onClick={generatePDF} 
+                className={!isSubmitted ? styles.btnDisabled : styles.btnDownload}
+                disabled={!isSubmitted}
+              >
+                Download PDF
+              </button>
+              
+              <button 
+                onClick={handleFinalSave} 
+                className={isSubmitted ? styles.btnDisabled : styles.btnConfirm} 
+                disabled={isSaving || isSubmitted}
+              >
+                {isSaving ? "Saving..." : isSubmitted ? "Submitted" : "Confirm & Save"}
               </button>
             </div>
           </div>
