@@ -8,14 +8,8 @@ import {
   getGraduationRate, 
   getAttendanceRate,
   getRetentionRate,
-  getTotalCounts,
-  getSessionUser,
+  getTotalCounts
 } from '@/app/lib/data';
-
-const user = await getSessionUser();
-if (user.role?.toLowerCase() !== 'registrar') {
-    redirect(user.role === 'subject teacher' ? '/dashboard/steacher' : '/dashboard/kteacher');
-}
 
 const Dashboard = async () => {
   // Fetching all data in parallel to keep the dashboard fast
