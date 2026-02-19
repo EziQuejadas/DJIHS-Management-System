@@ -56,8 +56,8 @@ const menuItems = [
         roles: ["subject teacher"] 
       },
       {
-        title: "My Subjects",
-        path: "/dashboard/teacher/subjects",
+        title: "Attendance",
+        path: "/dashboard/teacher/attendance",
         icon: <MdOutlineSubject />,
         roles: ["subject teacher"]
       },

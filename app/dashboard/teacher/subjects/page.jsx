@@ -9,7 +9,6 @@ const SubjectsPage = async () => {
     <div className={styles.pageContainer}>
       <div className={styles.pageHeader}>
         <h2 className={styles.pageTitle}>My Subjects</h2>
-        <a href="#" className={styles.viewAllLink}>View All</a>
       </div>
 
       <div className={styles.subjectsContainer}>

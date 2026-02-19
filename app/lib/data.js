@@ -644,49 +644,70 @@ export const saveGradesToDb = async (students) => {
   }
 };
 
-export const fetchMyClasses = async (teacherId) => {
+export const fetchMyClasses = async (userEmail) => {
   try {
-    // 1. Fetch the classes, joining with subjects and sections
-    const { data: classes, error: classError } = await supabase
+    // 1. Get the numeric teacherid
+    const { data: teacherProfile } = await supabase
+      .from('teachers')
+      .select('teacherid')
+      .eq('email', userEmail)
+      .single();
+
+    if (!teacherProfile) return { advisory: null, subjectClasses: [] };
+    const tId = teacherProfile.teacherid;
+
+    // 2. Fetch the Advisory Section (A section where this teacher is the adviser)
+    const { data: advisoryData } = await supabase
+      .from('sections')
+      .select('sectionid, sectionname, gradelevel, adviserid')
+      .eq('adviserid', tId)
+      .single();
+
+    // 3. Fetch Subject Classes (Classes this teacher teaches)
+    const { data: subjectClasses } = await supabase
       .from('classes')
       .select(`
         classid,
         schedule,
         subjects (subjectname),
-        sections (sectionname, gradelevel, sectionid)
+        sections (sectionid, sectionname, gradelevel)
       `)
-      .eq('teacherid', teacherId);
+      .eq('teacherid', tId);
 
-    if (classError) throw classError;
+    // 4. Get student counts for all relevant sections
+    const allSectionIds = [
+      ...(advisoryData ? [advisoryData.sectionid] : []),
+      ...(subjectClasses?.map(c => c.sections.sectionid) || [])
+    ];
 
-    // 2. Fetch all enrollments for these specific sections
-    // This avoids the relationship error because we filter by sectionid manually
-    const sectionIds = classes.map(cls => cls.sections.sectionid);
-    
-    const { data: enrollments, error: enrollError } = await supabase
-      .from('enrollments') // Using your exact plural table name
+    const { data: enrollments } = await supabase
+      .from('enrollments')
       .select('sectionid')
-      .in('sectionid', sectionIds);
+      .in('sectionid', allSectionIds);
 
-    if (enrollError) throw enrollError;
+    const getCount = (sid) => enrollments?.filter(e => e.sectionid === sid).length || 0;
 
-    // 3. Combine the data
-    return classes.map(cls => {
-      // Count how many students are in the section belonging to this class
-      const count = enrollments.filter(e => e.sectionid === cls.sections.sectionid).length;
-
-      return {
+    return {
+      advisory: advisoryData ? {
+        id: advisoryData.sectionid,
+        sectionName: advisoryData.sectionname,
+        gradeLevel: advisoryData.gradelevel,
+        studentCount: getCount(advisoryData.sectionid),
+        type: 'advisory'
+      } : null,
+      subjectClasses: (subjectClasses || []).map(cls => ({
         id: cls.classid,
-        subject: cls.subjects?.subjectname || "Unknown",
-        section: `${cls.sections?.sectionname} - Grade ${cls.sections?.gradelevel}`,
+        subject: cls.subjects?.subjectname,
+        section: cls.sections?.sectionname,
+        gradeLevel: cls.sections?.gradelevel,
         schedule: cls.schedule,
-        studentCount: count,
-        type: (cls.subjects?.subjectname || "").toLowerCase().includes("math") ? "math" : "default"
-      };
-    });
+        studentCount: getCount(cls.sections.sectionid),
+        type: 'subject'
+      }))
+    };
   } catch (error) {
-    console.error("Error fetching classes:", error);
-    return [];
+    console.error(error);
+    return { advisory: null, subjectClasses: [] };
   }
 };
 
@@ -838,6 +859,8 @@ export const fetchAllAssignments = async () => {
     // 3. Map the final data
     return classes.map(item => ({
       id: item.classid,
+      teacherid: item.teacherid,
+      sectionid: item.sectionid, 
       teacher: `${item.teachers?.firstname || ''} ${item.teachers?.lastname || ''}`,
       subject: item.subjects?.subjectname || item.subjectcode,
       section: item.sections?.sectionname || 'Unassigned',
@@ -1363,4 +1386,130 @@ export async function clearAuditLogs() {
   } catch (error) {
     return { success: false, error: error.message };
   }
+}
+
+export const fetchAdvisoryStudents = async (sectionId) => {
+  try {
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select(`
+        students (firstname, lastname)
+      `)
+      .eq('sectionid', sectionId)
+      .eq('status', 'Enrolled');
+
+    if (error) throw error;
+
+    return data.map(item => 
+      `${item.students.lastname.toUpperCase()}, ${item.students.firstname}`
+    ).sort();
+  } catch (error) {
+    console.error("Error fetching advisory students:", error);
+    return [];
+  }
+};
+
+// 2. Fetch Students for a specific Subject Class
+export const fetchClassStudents = async (classId) => {
+  try {
+    // First, find which section this class belongs to
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('sectionid')
+      .eq('classid', classId)
+      .single();
+
+    if (classError) throw classError;
+
+    // Then get students from that section
+    return await fetchAdvisoryStudents(classData.sectionid);
+  } catch (error) {
+    console.error("Error fetching class students:", error);
+    return [];
+  }
+};
+
+// 1. Fetch only the classes assigned to the teacher for the Attendance Picker
+export const fetchAttendanceEntryData = async (classId, month) => {
+  try {
+    // 1. Get the section ID first
+    const { data: classInfo, error: classError } = await supabase
+      .from('classes')
+      .select('sectionid')
+      .eq('classid', parseInt(classId)) // Ensure it's an integer
+      .single();
+
+    if (classError || !classInfo) throw new Error("Class not found");
+
+    // 2. Get students and their specific monthly attendance
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('enrollments')
+      .select(`
+        enrollmentid,
+        students (lrn, lastname, firstname),
+        attendance (attendanceid, month, dayspresent, totalschooldays)
+      `)
+      .eq('sectionid', classInfo.sectionid);
+
+    if (enrollError) throw enrollError;
+
+    // 3. Map the data to a flat structure for the table
+    return enrollments.map(e => {
+      const att = e.attendance?.find(a => a.month === month);
+      return {
+        enrollmentid: e.enrollmentid,
+        lrn: e.students?.lrn || "N/A",
+        studentName: `${e.students?.lastname || ""}, ${e.students?.firstname || ""}`,
+        dayspresent: att?.dayspresent || 0,
+        totalschooldays: att?.totalschooldays || 20,
+        attendanceid: att?.attendanceid || null
+      };
+    });
+  } catch (error) {
+    console.error("fetchAttendanceEntryData Error:", error);
+    return [];
+  }
+};
+
+export async function saveDailyAttendance(records) {
+  try {
+    const updatePromises = records.map((rec) => {
+      return supabase
+        .from('attendance') // Table name from your schema
+        .update({ dayspresent: rec.newTotal })
+        .eq('enrollmentid', parseInt(rec.enrollmentid)) // Ensure it's an integer
+        .eq('month', rec.month);
+    });
+
+    const results = await Promise.all(updatePromises);
+    
+    // Check if any specific update failed
+    const errorResult = results.find(r => r.error);
+    if (errorResult) throw errorResult.error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Save Error:', error);
+    throw new Error(error.message || 'Failed to update attendance values.');
+  }
+}
+
+export async function fetchAttendanceLogsByDate(classid, date) {
+  const { data, error } = await supabase
+    .from('attendance_logs')
+    .select('enrollmentid, status')
+    .eq('classid', classid)
+    .eq('attendance_date', date);
+    
+  if (error) return [];
+  return data;
+}
+
+export async function saveDailyAttendanceLogs(payload) {
+  // .upsert will update the status if the record exists, or create a new one if not
+  const { error } = await supabase
+    .from('attendance_logs')
+    .upsert(payload, { onConflict: 'attendance_date, enrollmentid' });
+    
+  if (error) throw error;
 }

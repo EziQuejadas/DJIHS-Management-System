@@ -11,8 +11,12 @@ export default function TeacherDashboard() {
     const [teacherName, setTeacherName] = useState("Teacher");
     const [classData, setClassData] = useState([]);
     const [stats, setStats] = useState({ students: 0, subjects: 0, pending: 0 });
+    
+    // Reminder States
+    const [showReminder, setShowReminder] = useState(false);
+    const [daysLeft, setDaysLeft] = useState(0);
+    const [activeQuarter, setActiveQuarter] = useState("");
 
-    // Hardcoded email as requested to bypass Auth hassle
     const USER_EMAIL = "cbgalmonte@gmail.com";
 
     useEffect(() => {
@@ -20,21 +24,16 @@ export default function TeacherDashboard() {
             try {
                 setLoading(true);
 
-                // 1. Fetch Teacher Name from YOUR 'users' table
-                const { data: userData, error: userError } = await supabase
+                // 1. Fetch Teacher Name
+                const { data: userData } = await supabase
                     .from('users')
                     .select('first_name')
                     .eq('email', USER_EMAIL)
                     .maybeSingle();
+                if (userData) setTeacherName(userData.first_name);
 
-                if (userData) {
-                    setTeacherName(userData.first_name);
-                }
-
-                // 2. Fetch Dashboard stats/classes from the database logic
-                // Ensure RLS is disabled for these tables or policies are set to 'true'
+                // 2. Fetch Stats
                 const data = await getTeacherDashboardStatsByEmail(USER_EMAIL);
-
                 if (data && data.length > 0) {
                     setClassData(data);
                     setStats({
@@ -43,8 +42,42 @@ export default function TeacherDashboard() {
                         pending: data.reduce((acc, curr) => acc + (Number(curr.pending) || 0), 0)
                     });
                 }
+
+                // 3. FETCH ACTIVE CONFIG & DEADLINES
+                const { data: config } = await supabase
+                    .from('system_config')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+
+                if (config) {
+                    // Logic: You can change "q2" to "q3" etc. based on your current needs
+                    const currentQ = "q2"; 
+                    const deadlineKey = `${currentQ}_deadline`;
+                    const deadlineValue = config[deadlineKey];
+
+                    setActiveQuarter(currentQ.toUpperCase());
+
+                    if (deadlineValue) {
+                        const deadlineDate = new Date(deadlineValue);
+                        const hasSeen = sessionStorage.getItem('gradeReminderSeen');
+                        
+                        if (!hasSeen) {
+                            const today = new Date();
+                            const diffInTime = deadlineDate.getTime() - today.getTime();
+                            const diffInDays = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
+
+                            // Show if within 10 days and hasn't passed
+                            if (diffInDays <= 10 && diffInDays >= 0) {
+                                setDaysLeft(diffInDays);
+                                setShowReminder(true);
+                            }
+                        }
+                    }
+                }
+
             } catch (error) {
-                console.error("Critical Dashboard Error:", error);
+                console.error("Dashboard Error:", error);
             } finally {
                 setLoading(false);
             }
@@ -53,122 +86,100 @@ export default function TeacherDashboard() {
         loadDashboardData();
     }, []);
 
-    // --- QUICK ACTION HANDLERS ---
-    const handleGenerateReport = () => {
-        alert(`Generating Performance Report for ${teacherName}'s classes...`);
-        // Logic for report generation goes here
+    const handleCloseReminder = () => {
+        sessionStorage.setItem('gradeReminderSeen', 'true');
+        setShowReminder(false);
     };
 
-    const handlePrintClassList = () => {
-        if (classData.length === 0) {
-            alert("No class data available to print.");
-            return;
-        }
-        window.print();
-    };
-
-    if (loading) {
-        return (
-            <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <h3>Loading Don Jose Integrated HS Portal...</h3>
-                    <p>Fetching teacher records...</p>
-                </div>
-            </div>
-        );
-    }
+    // --- RENDER LOGIC ---
+    if (loading) return <div className={styles.container}>Loading Portal...</div>;
 
     return (
         <div className={styles.container}>
-            {/* Header Section */}
+            {/* DYNAMIC POPUP MODAL */}
+            {showReminder && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalBox}>
+                        <button className={styles.closeX} 
+                        onClick={handleCloseReminder}
+                        aria-label="Close"
+                         >
+                        &times;
+                         </button>
+                        <div className={styles.modalHeader}></div>
+                        <div className={styles.modalContent}>
+                            <div className={styles.modalIcon}>📢</div>
+                            <h3 className={styles.modalTitle}>{activeQuarter} Grading Deadline</h3>
+                            <p className={styles.modalText}>
+                                Hi {teacherName}, the deadline for <strong>{activeQuarter}</strong> grade submission is in 
+                                <span className={styles.daysHighlight}> {daysLeft} days</span>. 
+                                Please finalize your records soon.
+                            </p>
+                            <button 
+                                onClick={handleCloseReminder} 
+                                className={styles.modalButton}
+                            >
+                                Got it, thanks!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* HEADER */}
             <div className={styles.welcomeSection}>
                 <div className={styles.welcomeText}>
                     <h3>Welcome back, {teacherName}!</h3>
                 </div>
                 <div className={styles.statsDate}>
-                    {new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })} | S.Y. 2025-26
+                    {new Date().toLocaleDateString()} | S.Y. 2025-26
                 </div>
             </div>
 
-            {/* Top Stat Cards */}
+            {/* STATS */}
             <div className={styles.statsContainer}>
                 <StatCard label="Total Students" value={stats.students} />
                 <StatCard label="Subjects Taught" value={stats.subjects} />
                 <StatCard label="Grades Pending" value={stats.pending} />
             </div>
 
+            {/* MAIN CONTENT */}
             <div className={styles.contentRow}>
-                {/* Main Content: My Subjects Table */}
                 <div className={styles.sectionCard}>
                     <div className={styles.sectionHeader}>
                         <h3 className={styles.sectionTitle}>My Subjects</h3>
-                        <Link href="/dashboard/teacher/subjects" className={styles.viewAll}>
-                            View All
-                        </Link>
+                        <Link href="/dashboard/teacher/subjects" className={styles.viewAll}>View All</Link>
                     </div>
                     <div className={styles.tableWrapper}>
                         <table className={styles.subjectTable}>
                             <thead>
-                                <tr>
-                                    <th>Subject</th>
-                                    <th>Section</th>
-                                    <th>Students</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
+                                <tr><th>Subject</th><th>Section</th><th>Students</th><th>Status</th></tr>
                             </thead>
                             <tbody>
-                                {classData.length > 0 ? (
-                                    classData.map((cls, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{cls.subject}</strong></td>
-                                            <td>{cls.section}</td>
-                                            <td>{cls.students} Students</td>
-                                            <td>
-                                                <span className={`${styles.statusBadge} ${styles[(cls.status || '').toLowerCase()] || styles.notstarted}`}>
-                                                    {(cls.status || 'NOTSTARTED').toUpperCase()}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                                            No subjects assigned to your account.
+                                {classData.map((cls, i) => (
+                                    <tr key={i}>
+                                        <td><strong>{cls.subject}</strong></td>
+                                        <td>{cls.section}</td>
+                                        <td>{cls.students}</td>
+                                        <td>
+                                            <span className={`${styles.statusBadge} ${styles[(cls.status || '').toLowerCase()] || styles.notstarted}`}>
+                                                {(cls.status || 'NOTSTARTED').toUpperCase()}
+                                            </span>
                                         </td>
                                     </tr>
-                                )}
+                                ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                {/* Sidebar: Quick Actions */}
+                {/* SIDEBAR */}
                 <div className={styles.sidebar}>
                     <div className={styles.sectionCard}>
                         <h3 className={styles.sectionTitle}>Quick Actions</h3>
                         <div className={styles.quickActions}>
-                            <button 
-                                className={styles.actionBtn}
-                                onClick={handleGenerateReport}
-                            >
-                                Generate Reports
-                            </button>
-                            <button 
-                                className={styles.actionBtn}
-                                onClick={handlePrintClassList}
-                            >
-                                Print Class List
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Optional: Reminders Card */}
-                    <div className={styles.sectionCard} style={{ marginTop: '20px' }}>
-                        <h3 className={styles.sectionTitle}>Upcoming</h3>
-                        <div style={{ fontSize: '0.85rem', color: '#555' }}>
-                            <p>• Submit Q3 Grades by Feb 20</p>
-                            <p>• Faculty Meeting at 3:00 PM</p>
+                            <button className={styles.actionBtn} onClick={() => alert('Generating...')}>Generate Reports</button>
+                            <button className={styles.actionBtn} onClick={() => window.print()}>Print Class List</button>
                         </div>
                     </div>
                 </div>
@@ -177,9 +188,7 @@ export default function TeacherDashboard() {
     );
 }
 
-/**
- * Reusable Stat Card Component
- */
+// --- REUSABLE COMPONENT ---
 function StatCard({ label, value }) {
     return (
         <div className={styles.statCard}>

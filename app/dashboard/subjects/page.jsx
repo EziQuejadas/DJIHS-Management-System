@@ -6,7 +6,6 @@ const Subjects = async ({ searchParams }) => {
   const params = await searchParams;
   const grade = params?.grade || 7;
 
-  // Removed the 'query' parameter
   const subjects = await fetchSubjectsWithStats(grade);
 
   return (
@@ -14,7 +13,6 @@ const Subjects = async ({ searchParams }) => {
       <div className={styles.subjectsHeader}>
         <h2>Manage Subjects</h2>
         
-        {/* Simplified Header: Just the filters */}
         <div className={styles.filter}>
           {[7, 8, 9, 10].map((g) => (
             <a 

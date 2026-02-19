@@ -12,6 +12,11 @@ const TeacherRow = ({ teacher, classes }) => {
   const submittedClasses = classes.filter(c => ['forwarded', 'completed'].includes(c.status)).length;
   const isFullyDone = totalClasses === submittedClasses;
 
+  // Alphabetize subjects within the dropdown
+  const sortedClasses = [...classes].sort((a, b) => 
+    a.subject.localeCompare(b.subject)
+  );
+
   return (
     <>
       <tr 
@@ -29,14 +34,12 @@ const TeacherRow = ({ teacher, classes }) => {
           </span>
         </td>
         <td>
-          {/* Main Status Badge */}
           <span className={`${styles.statusBadge} ${isFullyDone ? styles.statusCompleted : styles.statusPending}`}>
             {isFullyDone ? 'Completed' : 'Pending'}
           </span>
         </td>
       </tr>
       
-      {/* Detailed View - Only shows when row is clicked */}
       {isOpen && (
         <tr>
           <td colSpan="4" style={{ padding: '0 0 20px 40px', backgroundColor: '#f8fafc' }}>
@@ -49,14 +52,13 @@ const TeacherRow = ({ teacher, classes }) => {
                 </tr>
               </thead>
               <tbody>
-                {classes.map((cls, idx) => {
+                {sortedClasses.map((cls, idx) => {
                   const isSubmitted = ['forwarded', 'completed'].includes(cls.status);
                   return (
-                    <tr key={idx}>
-                      <td>{cls.subject}</td>
-                      <td>{cls.section}</td>
-                      <td>
-                        {/* Nested Table Badges */}
+                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '8px' }}>{cls.subject}</td>
+                      <td style={{ padding: '8px' }}>{cls.section}</td>
+                      <td style={{ padding: '8px' }}>
                         <span className={`${styles.statusBadge} ${isSubmitted ? styles.statusSubmitted : styles.statusWaiting}`}>
                           {isSubmitted ? 'Submitted' : 'Waiting'}
                         </span>
@@ -84,7 +86,7 @@ export default function SubmissionsPage() {
       const rawData = await fetchSubmissionStatuses(quarter);
       
       // GROUPING ALGORITHM: Turn flat list into { "Teacher Name": [class1, class2] }
-      const grouped = rawData.reduce((acc, item) => {
+      const grouped = (rawData || []).reduce((acc, item) => {
         if (!acc[item.teacher]) acc[item.teacher] = [];
         acc[item.teacher].push(item);
         return acc;
@@ -92,7 +94,7 @@ export default function SubmissionsPage() {
 
       setGroupedData(grouped);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -100,12 +102,21 @@ export default function SubmissionsPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Handle the sorting of the main teacher list
+  const sortedTeacherEntries = Object.entries(groupedData).sort(([nameA], [nameB]) => 
+    nameA.localeCompare(nameB, undefined, { sensitivity: 'base' })
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
         <h2 className={styles.pageTitle}>Teacher Submission Overview</h2>
         <div className={styles.headerActions}>
-          <select className={styles.filterDropdown}value={quarter} onChange={(e) => setQuarter(parseInt(e.target.value))}>
+          <select 
+            className={styles.filterDropdown} 
+            value={quarter} 
+            onChange={(e) => setQuarter(parseInt(e.target.value))}
+          >
             <option value={1}>Quarter 1</option>
             <option value={2}>Quarter 2</option>
             <option value={3}>Quarter 3</option>
@@ -116,7 +127,9 @@ export default function SubmissionsPage() {
       </div>
 
       <div className={styles.submissionsContainer}>
-        {loading ? <p>Loading teachers...</p> : (
+        {loading ? (
+          <div className={styles.loadingWrapper}><p>Loading records...</p></div>
+        ) : (
           <table className={styles.submissionsTable}>
             <thead>
               <tr>
@@ -127,12 +140,16 @@ export default function SubmissionsPage() {
               </tr>
             </thead>
             <tbody>
-              {Object.keys(groupedData).length > 0 ? (
-                Object.entries(groupedData).map(([teacherName, classes]) => (
+              {sortedTeacherEntries.length > 0 ? (
+                sortedTeacherEntries.map(([teacherName, classes]) => (
                   <TeacherRow key={teacherName} teacher={teacherName} classes={classes} />
                 ))
               ) : (
-                <tr><td colSpan="4">No data available for this quarter.</td></tr>
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    No data available for Quarter {quarter}.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

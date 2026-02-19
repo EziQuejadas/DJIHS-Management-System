@@ -1,5 +1,5 @@
 .container {
-    padding: 10px;
+    padding: 20px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -8,34 +8,67 @@
 }
 
 .pageHeader {
-    margin-bottom: 20px;
+    margin-bottom: 0px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
 .pageTitle {
     color: #2d5f4f;
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     margin: 0;
 }
 
-/* Grid: Ensuring it stretches to the right */
+.pageSubtitle {
+    color: #718096;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Grouping Logic */
+.contentWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.sectionGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.groupLabel {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #a0aec0;
+    font-weight: 800;
+    border-left: 3px solid #cbd5e0;
+    padding-left: 10px;
+}
+
+/* Grid */
 .classesGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 15px;
+    gap: 20px;
     width: 100%;
 }
 
-/* The Card Structure */
+/* Card Structure */
 .classCard {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow: visible; 
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid #edf2f0;
+    position: relative;
 }
 
 .classCard:hover {
@@ -43,31 +76,82 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Header/Image Area */
+/* --- ADVISORY CARD SPECIFICS --- */
+.advisoryCard {
+    border: 2px solid #2d5f4f;
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+    max-width: 500px; /* Advisory is a single section, doesn't need to be huge */
+}
+
+.advisoryHeader {
+    margin-bottom: 5px;
+}
+
+.advisoryDescription {
+    font-size: 14px;
+    color: #4a5568;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.advisoryBadge {
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: #2d5f4f;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 4px 10px rgba(45, 95, 79, 0.3);
+}
+
+.advisoryBtn {
+    background-color: #1a3d32;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.advisoryBtn:hover {
+    background-color: #0d221b;
+}
+
+/* --- SUBJECT CARD IMAGE AREA --- */
 .classImage {
-    height: 140px;
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     color: white;
+    border-radius: 11px 11px 0 0;
 }
 
 .subjectOverlay {
-    font-size: 56px;
-    color: rgba(255, 255, 255, 0.3);
+    font-size: 64px;
+    color: rgba(255, 255, 255, 0.25);
     font-weight: 800;
 }
 
-/* Subject Colors */
-.defaultBg { background: linear-gradient(135deg, #805ad5, #b794f4); }
+.defaultBg { background: linear-gradient(135deg, #2d5f4f, #3e8e75); }
 
-/* Text Content */
+/* --- CONTENT --- */
 .classContent {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 .classSubject {
@@ -77,20 +161,33 @@
     margin: 0;
 }
 
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon {
+    font-size: 14px;
+    opacity: 0.6;
+}
+
 .classSection {
-    color: #4a5568;
+    color: #2d3748;
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
+    margin: 0;
 }
 
 .classSchedule {
     color: #718096;
     font-size: 14px;
+    margin: 0;
 }
 
-/* Footer with Student Count and Button */
+/* --- FOOTER --- */
 .classFooter {
-    margin-top: 15px;
+    margin-top: 5px;
     padding-top: 15px;
     border-top: 1px solid #f1f5f9;
     display: flex;
@@ -102,33 +199,146 @@
     font-size: 13px;
     font-weight: 600;
     color: #4a5568;
-    background: #f1f5f9;
-    padding: 6px 12px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
 .viewBtn {
-    background-color: #2d5f4f;
-    color: white;
-    padding: 10px 18px;
+    background-color: #edf2f0;
+    color: #2d5f4f;
+    padding: 8px 16px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
 
 .viewBtn:hover {
-    background-color: #1a3d32;
+    background-color: #2d5f4f;
+    color: white;
 }
 
-.loading {
-    padding: 50px;
+/* Loading States */
+.loadingWrapper {
+    padding: 100px 0;
     text-align: center;
     color: #2d5f4f;
-    font-weight: 600;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2d5f4f;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.emptyContainer {
+    padding: 40px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e0;
+    text-align: center;
+}   
+
+/* Modal Backdrop */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Modal Window */
+.modalContent {
+    background: white;
+    width: 90%;
+    max-width: 1000px;
+    height: 85vh;
+    border-radius: 16px;
+    position: relative;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    animation: scaleUp 0.2s ease-out;
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 32px;
+    background: none;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.closeBtn:hover {
+    color: #e53e3e;
+}
+
+.modalInner h2 {
+    color: #2d5f4f;
+    margin-bottom: 10px;
+}
+
+.modalInner h2 {
+    color: #2d5f4f;
+    font-size: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #edf2f7;
+    padding-bottom: 10px;
+}
+
+.studentList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.studentItem {
+    padding: 10px 15px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+}
+
+.studentNumber {
+    font-weight: 700;
+    color: #718096;
+    margin-right: 15px;
+    font-size: 12px;
+    width: 20px;
+}
+
+.modalLoading {
+    padding: 40px;
+    text-align: center;
+    color: #718096;
+    font-style: italic;
 }

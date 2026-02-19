@@ -15,6 +15,7 @@ const KeyTeacherDashboard = () => {
   const [userName, setUserName] = useState("User");
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [importType, setImportType] = useState('classes'); // 'classes' or 'students'
 
   const [teacherOptions, setTeacherOptions] = useState([]);
   const [subjectOptions, setSubjectOptions] = useState([]);
@@ -101,47 +102,113 @@ const KeyTeacherDashboard = () => {
     }
   };
 
-  // --- Bulk Import Logic (using ExcelJS) ---
+  // --- Template Download Logic ---
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet(importType === 'classes' ? 'Class Assignments' : 'Student List');
+
+    const headers = importType === 'classes' 
+      ? ['subject_code', 'teacher_id', 'section_id'] 
+      : ['lrn', 'first_name', 'last_name', 'section_id', 'gender'];
+
+    sheet.addRow(headers);
+    
+    // Formatting header
+    sheet.getRow(1).font = { bold: true };
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${importType}_template.xlsx`;
+    link.click();
+  };
+
   const handleBulkImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setIsImporting(true);
+    const errors = [];
+    const validRows = [];
     
     try {
       const buffer = await file.arrayBuffer();
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.load(buffer);
       
-      const worksheet = workbook.getWorksheet(1); // Read first sheet
-      const importData = [];
+      const worksheet = workbook.getWorksheet(1);
+      if (!worksheet) throw new Error("Could not read Excel worksheet.");
 
-      // Iterate rows starting from 2 (skipping headers)
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > 1) {
-          const subject_code = row.getCell(1).value;
-          const teacher_id = row.getCell(2).value;
-          const section_id = row.getCell(3).value;
+        if (rowNumber > 1) { // Skip headers
+          const rowData = {};
+          let isRowValid = true;
 
-          if (subject_code && teacher_id && section_id) {
-            importData.push({
-              subjectcode: subject_code.toString(),
-              teacherid: parseInt(teacher_id),
-              sectionid: parseInt(section_id)
-            });
+          if (importType === 'classes') {
+            const subject_code = row.getCell(1).value;
+            const teacher_id = row.getCell(2).value;
+            const section_id = row.getCell(3).value;
+
+            // Validation: Ensure all fields are present and IDs are numbers
+            if (!subject_code || isNaN(parseInt(teacher_id)) || isNaN(parseInt(section_id))) {
+              errors.push(`Row ${rowNumber}: Invalid or missing data.`);
+              isRowValid = false;
+            } else {
+              rowData.subjectcode = subject_code.toString();
+              rowData.teacherid = parseInt(teacher_id);
+              rowData.sectionid = parseInt(section_id);
+            }
+          } else {
+            // Student logic validation
+            const lrn = row.getCell(1).value;
+            const fname = row.getCell(2).value;
+            const lname = row.getCell(3).value;
+            const sec_id = row.getCell(4).value;
+            const gender = row.getCell(5).value;
+
+            if (!lrn || !fname || !lname || isNaN(parseInt(sec_id))) {
+              errors.push(`Row ${rowNumber}: Missing required student details.`);
+              isRowValid = false;
+            } else {
+              rowData.lrn = lrn.toString();
+              rowData.firstname = fname.toString();
+              rowData.lastname = lname.toString();
+              rowData.sectionid = parseInt(sec_id);
+              rowData.gender = gender ? gender.toString() : "N/A";
+            }
           }
+
+          if (isRowValid) validRows.push(rowData);
         }
       });
 
-      if (importData.length === 0) throw new Error("No valid data found in file.");
+      // Show validation report if errors exist
+      if (errors.length > 0) {
+        const errorSummary = errors.slice(0, 5).join('\n') + (errors.length > 5 ? `\n...and ${errors.length - 5} more.` : '');
+        const proceed = confirm(
+          `Validation Report:\n\n❌ Errors found: ${errors.length}\n✅ Valid rows: ${validRows.length}\n\nErrors:\n${errorSummary}\n\nDo you want to skip the errors and import the valid rows?`
+        );
+        if (!proceed) {
+          setIsImporting(false);
+          e.target.value = null;
+          return;
+        }
+      }
 
-      const { error } = await supabase.from('classes').insert(importData);
-      if (error) throw error;
+      if (validRows.length === 0) {
+        alert("No valid rows found to import.");
+      } else {
+        const targetTable = importType === 'classes' ? 'classes' : 'students';
+        const { error: insertError } = await supabase.from(targetTable).insert(validRows);
+        
+        if (insertError) throw insertError;
+        alert(`✅ Successfully imported ${validRows.length} ${importType}!`);
+      }
 
-      alert(`✅ Successfully imported ${importData.length} assignments!`);
     } catch (err) {
       console.error("Import Error:", err);
-      alert("❌ Import failed. Ensure columns are: A: Subject Code, B: Teacher ID, C: Section ID");
+      alert(`❌ Import failed: ${err.message || 'Database error'}`);
     } finally {
       setIsImporting(false);
       e.target.value = null; 
@@ -181,7 +248,7 @@ const KeyTeacherDashboard = () => {
       <div className={styles.dashboardGrid}>
         {/* MANUAL FORM */}
         <div className={styles.assignmentSection}>
-          <h3 className={styles.sectionTitle}>Manual Assignment</h3>
+          <h3 className={styles.sectionTitle}>Manual Class Assignment</h3>
           <div className={styles.assignmentForm}>
             <FormSelect 
               label="Subject" 
@@ -209,11 +276,32 @@ const KeyTeacherDashboard = () => {
 
         {/* BULK IMPORT */}
         <div className={styles.importSection}>
-          <h3 className={styles.sectionTitle}>Bulk Import</h3>
+          <h3 className={styles.sectionTitle}>Bulk Data Import</h3>
           <div className={styles.importCard}>
+            
+            {/* TYPE TOGGLE */}
+            <div className={styles.importTabs}>
+              <button 
+                className={importType === 'classes' ? styles.tabActive : styles.tab}
+                onClick={() => setImportType('classes')}
+              >
+                Classes
+              </button>
+              <button 
+                className={importType === 'students' ? styles.tabActive : styles.tab}
+                onClick={() => setImportType('students')}
+              >
+                Students
+              </button>
+            </div>
+
             <p className={styles.importInfo}>
-              Upload Excel file (.xlsx) to assign multiple subjects.
+              Import {importType} via Excel. 
+              <button onClick={downloadTemplate} className={styles.linkButton}>
+                Download {importType} template
+              </button>
             </p>
+
             <div className={styles.fileUploadContainer}>
               <input 
                 type="file" 
@@ -224,17 +312,8 @@ const KeyTeacherDashboard = () => {
                 className={styles.hiddenInput}
               />
               <label htmlFor="bulk-upload" className={styles.uploadLabel}>
-                {isImporting ? "Processing..." : "📁 Upload Excel (.xlsx)"}
+                {isImporting ? "Processing..." : `📁 Upload ${importType} (.xlsx)`}
               </label>
-            </div>
-            <div className={styles.formatHelper}>
-                
-                <strong>Required Structure (Row 1 as Header):</strong>
-                <ul>
-                    <li>Column A: <code>subject_code</code></li>
-                    <li>Column B: <code>teacher_id</code></li>
-                    <li>Column C: <code>section_id</code></li>
-                </ul>
             </div>
           </div>
         </div>
@@ -256,7 +335,7 @@ const FormSelect = ({ label, options, onChange, value }) => (
   </div>
 );
 
-// --- Icons (Same as your previous ones) ---
+// --- Icons ---
 const TeacherIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>);
 const SubjectIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>);
 const AlertIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>);

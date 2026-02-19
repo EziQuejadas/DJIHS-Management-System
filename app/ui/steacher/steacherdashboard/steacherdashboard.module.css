@@ -145,3 +145,116 @@
     background: #2d5f4f;
     color: white;
 }
+
+/* The semi-transparent background */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(45, 95, 79, 0.4);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+/* The white box */
+.modalBox {
+    position: relative; 
+    background: white;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border: 1px solid #d4ede5;
+    animation: slideUp 0.3s ease-out;
+}
+
+.modalHeader {
+    height: 8px;
+    background: linear-gradient(90deg, #2d5f4f 0%, #d4ede5 100%);
+}
+
+.modalContent {
+    padding: 30px;
+}
+
+.modalIcon {
+    width: 60px;
+    height: 60px;
+    background-color: #e8f5f1;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px;
+    font-size: 24px;
+}
+
+.modalTitle {
+    color: #2d5f4f;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.modalText {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.daysHighlight {
+    color: #2d5f4f;
+    font-weight: 800;
+    border-bottom: 2px solid #2d5f4f;
+}
+
+.modalButton {
+    width: 100%;
+    padding: 15px;
+    background: #2d5f4f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.modalButton:hover {
+    background: #1e3f35;
+    transform: translateY(-2px);
+}
+
+/* Smooth entry animation */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.closeX {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: #2d5f4f; /* Matches your theme */
+    cursor: pointer;
+    z-index: 10;
+    scale: 1.6;
+    transition: transform 0.2s, color 0.2s;
+    line-height: 1;
+}
+
+.closeX:hover {
+    transform: scale(1.2);
+    color: #1e3f35; /* Darker green on hover */
+}

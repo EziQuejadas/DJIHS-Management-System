@@ -1,0 +1,165 @@
+.pageContainer {
+    padding: 20px;
+    max-width: 100%;
+    background-color: #f8faf9;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+
+/* Blackboard-style Identity Header */
+.attendanceHeader {
+    background: #2d5f4f;
+    padding: 16px 24px;
+    border-radius: 10px 10px 0 0;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(45, 95, 79, 0.15);
+}
+
+.headerInfo h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.headerSub { font-size: 12px; opacity: 0.85; display: block; margin-top: 2px; }
+
+.btnGhost {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btnGhost:hover { background: rgba(255,255,255,0.2); }
+
+/* Toolbar */
+.toolbar {
+    background: white;
+    padding: 15px 24px;
+    display: flex;
+    gap: 30px;
+    border-bottom: 1px solid #edf2f0;
+    border-left: 1px solid #edf2f0;
+    border-right: 1px solid #edf2f0;
+}
+
+.filterGroup { display: flex; flex-direction: column; gap: 4px; }
+.filterLabel { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; }
+
+.filterSelect {
+    appearance: none;
+    background-color: #f9fafb;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.2em 1.2em;
+    padding: 6px 30px 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    min-width: 180px;
+}
+
+/* Table */
+.gradeTableContainer {
+    background: white;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #edf2f0;
+    border-top: none;
+    min-height: 500px;
+}
+
+.gradeTable { width: 100%; border-collapse: collapse; }
+.gradeTable th {
+    background-color: #fcfdfc;
+    color: #2d5f4f;
+    padding: 15px 24px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #edf2f0;
+}
+
+.gradeTable td { padding: 12px 24px; border-bottom: 1px solid #f1f5f3; }
+.studentName { font-weight: 600; color: #374151; font-size: 14px; display: block; }
+.lrnText { font-size: 11px; color: #94a3b8; }
+.lowAttendance { color: #d93025; font-weight: 700; }
+
+/* Segmented Control */
+.buttonCenter { display: flex; justify-content: center; }
+.segmentedControl {
+    display: flex;
+    background: #f1f5f3;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.iconBtn {
+    width: 44px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    border-radius: 6px;
+    color: #94a3b8;
+}
+
+.present.active { background: #2d5f4f; color: white; }
+.excused.active { background: #d97706; color: white; }
+.absent.active { background: #d93025; color: white; }
+
+/* Footer & Summary */
+.footerArea {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #edf2f0;
+}
+
+.summaryBox { display: flex; gap: 40px; }
+.summaryItem { display: flex; flex-direction: column; }
+.summaryItem span { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+.summaryItem strong { font-size: 20px; }
+
+.btnPrimary {
+    background-color: #2d5f4f;
+    color: white;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btnPrimary:hover:not(:disabled) { background: #234a3e; }
+.btnPrimary:disabled { background: #94a3b8; cursor: not-allowed; }
+
+/* Add to your module.css */
+.unsavedRow {
+  border-left: 4px solid #d97706; /* Orange warning for unsaved */
+  background-color: #fffbeb;
+}
+
+.savedBadge {
+  font-size: 10px;
+  background: #d4edda;
+  color: #155724;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}

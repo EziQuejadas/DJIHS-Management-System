@@ -1,8 +1,15 @@
+/* Container & Header */
+.container {
+    padding: 10px;
+    background-color: #f8faf9;
+    min-height: 100vh;
+}
+
 .pageHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0px;
+    margin-bottom: 10px;
 }
 
 .pageTitle {
@@ -16,19 +23,30 @@
     color: #666;
 }
 
+.printBtn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
 /* Stats Cards */
 .statsRow {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .statCard {
     background: white;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .statHeader {
@@ -50,12 +68,6 @@
     border-radius: 6px;
 }
 
-.statIcon svg {
-    width: 18px;
-    height: 18px;
-    stroke: #2d5f4f;
-}
-
 .statValue {
     font-size: 36px;
     font-weight: 700;
@@ -63,92 +75,32 @@
     border-bottom: 3px solid #2d5f4f;
     padding-bottom: 5px;
     display: inline-block;
+    transition: all 0.3s ease;
 }
 
 /* Layout */
 .contentLayout {
     display: grid;
     grid-template-columns: 1fr 300px;
-    gap: 10px;
+    gap: 20px;
 }
 
-@media (max-width: 1024px) {
-    .contentLayout {
-        grid-template-columns: 1fr;
-    }
-}
-
-.filterPanel {
-    background: white;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    height: fit-content;
-}
-
-.filterTitle {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.filterGroup {
-    margin-bottom: 20px;
-}
-
-.filterGroup label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 8px;
-}
-
-.filterSelect {
-    width: 100%;
-    padding: 10px 12px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.generateBtn {
-    width: 100%;
-    padding: 12px;
-    background: #2d5f4f;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.generateBtn:hover {
-    background: #1a3d32;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-/* Charts */
+/* Charts & Main Content */
 .chartsSection {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
 }
 
 .chartCard {
     background: white;
     padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .chartTitle {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
     color: #333;
     margin-bottom: 20px;
@@ -158,7 +110,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-around;
-    height: 200px;
+    height: 180px;
     gap: 15px;
 }
 
@@ -173,24 +125,25 @@
 .bar {
     width: 100%;
     background: #2d5f4f;
-    border-radius: 6px 6px 0 0;
+    border-radius: 4px 4px 0 0;
     display: flex;
     align-items: flex-start;
     justify-content: center;
     color: white;
+    font-size: 11px;
     font-weight: 700;
-    padding-top: 10px;
+    padding-top: 8px;
     min-height: 20px;
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
 }
 
 .barLabel {
-    font-size: 12px;
-    color: #666;
+    font-size: 11px;
+    color: #777;
     text-align: center;
 }
 
-/* Table */
+/* Table Enhancements */
 .performanceTable {
     width: 100%;
     border-collapse: collapse;
@@ -200,14 +153,29 @@
     text-align: left;
     padding: 12px;
     font-size: 13px;
-    color: #666;
+    color: #888;
     border-bottom: 2px solid #f0f0f0;
 }
 
 .performanceTable td {
-    padding: 15px 12px;
+    padding: 14px 12px;
     border-bottom: 1px solid #f5f5f5;
     font-size: 14px;
+}
+
+.atRiskRow {
+    background-color: #fff8f8;
+}
+
+.riskTag {
+    font-size: 10px;
+    background: #fdecea;
+    color: #e74c3c;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 .rankBadge {
@@ -221,44 +189,62 @@
     font-size: 12px;
 }
 
-.gold {
-    background: linear-gradient(135deg, #ffd700, #ffae00);
-    border: 2px solid #f0c500;
+/* Your original medal gradients */
+.gold { background: linear-gradient(135deg, #ffd700, #ffae00); border: 2px solid #f0c500; color: white; }
+.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); border: 2px solid #b0b0b0; color: white; }
+.bronze { background: linear-gradient(135deg, #cd7f32, #a0522d); border: 2px solid #b87333; color: white; }
+.neutral { background-color: #f3f4f6; border: 1px solid #d1d5db; color: #6b7280; }
+
+.statusPassed { padding: 4px 12px; background: #e8f5f1; color: #2d5f4f; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.statusFailed { padding: 4px 12px; background: #fdecea; color: #e74c3c; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+/* Filter Panel */
+.filterPanel {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    height: fit-content;
+}
+
+.filterTitle { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #333; }
+.filterGroup { margin-bottom: 20px; }
+.filterGroup label { display: block; font-size: 13px; font-weight: 600; color: #666; margin-bottom: 8px; }
+
+.filterSelect {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #eee;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.filterSelect:focus { border-color: #2d5f4f; outline: none; }
+
+.generateBtn {
+    width: 100%;
+    padding: 12px;
+    background: #2d5f4f;
     color: white;
-}
-
-.silver {
-    background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
-    border: 2px solid #b0b0b0;
-    color: white;
-}
-
-.bronze {
-    background: linear-gradient(135deg, #cd7f32, #a0522d);
-    border: 2px solid #b87333;
-    color: white;
-}
-
-.neutral {
-    background-color: #f3f4f6; /* Light Gray */
-    border: 1px solid #d1d5db;
-    color: #6b7280; /* Dimmed text for lower ranks */
-}
-
-.statusPassed {
-    padding: 5px 12px;
-    background: #d4edda;
-    color: #155724;
-    border-radius: 20px;
-    font-size: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.statusFailed {
-    padding: 5px 12px;
-    background: #f8d7da;
-    color: #721c24;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
+.generateBtn:hover { background: #1a3d32; transform: translateY(-1px); }
+
+/* Print Handling */
+@media print {
+    .filterPanel, .printBtn { display: none; }
+    .contentLayout { grid-template-columns: 1fr; }
+    .container { padding: 0; background: white; }
+    .chartCard, .statCard { box-shadow: none; border: 1px solid #eee; }
+}
+
+@media (max-width: 1024px) {
+    .contentLayout { grid-template-columns: 1fr; }
 }

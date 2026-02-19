@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchClassReport, getTeacherDashboardStatsByEmail } from "@/app/lib/data";
 import styles from "@/app/ui/steacher/classreports/classreports.module.css";
 
@@ -9,14 +9,23 @@ const ClassReportsClient = ({ user }) => {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ classId: "", quarter: 1 });
+  const [currentDate, setCurrentDate] = useState("");
 
-  // Email pulled directly from the secure server-side user object
   const userEmail = user?.email;
 
-  // 1. Initial Load: Fetch teacher's subjects using cookie email
+  // Set the actual date on the client side to avoid hydration mismatch
+  useEffect(() => {
+    const now = new Date();
+    const formatted = now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    setCurrentDate(formatted);
+  }, []);
+
   useEffect(() => {
     if (!userEmail) return;
-
     const loadSubjects = async () => {
       const data = await getTeacherDashboardStatsByEmail(userEmail);
       if (data && data.length > 0) {
@@ -40,22 +49,33 @@ const ClassReportsClient = ({ user }) => {
     }
   };
 
-  // Auto-generate when classId is first set or changed
   useEffect(() => {
     if (filters.classId) handleGenerate();
   }, [filters.classId, filters.quarter]);
 
+  const atRiskCount = useMemo(() => {
+    return reportData?.students?.filter(s => s.final < 75).length || 0;
+  }, [reportData]);
+
+  const handlePrint = () => window.print();
+
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
-        <h2 className={styles.pageTitle}>Class Performance Summary</h2>
-        <div className={styles.pageDate}>Feb. 10, 2026 | S.Y. 2025-26</div>
+        <div>
+          <h2 className={styles.pageTitle}>Class Performance Summary</h2>
+          <div className={styles.pageDate}>{currentDate} | S.Y. 2025-26</div>
+        </div>
+        <button className={styles.printBtn} onClick={handlePrint}>
+          Print Report
+        </button>
       </div>
 
       <div className={styles.statsRow}>
         <StatCard label="Class Average" value={reportData?.stats?.average || 0} iconType="chart" />
         <StatCard label="Passing Rate" value={`${reportData?.stats?.passingRate || 0}%`} iconType="check" />
         <StatCard label="Total Students" value={reportData?.stats?.totalStudents || 0} iconType="users" />
+        <StatCard label="At-Risk" value={atRiskCount} iconType="warning" isAlert={atRiskCount > 0} />
       </div>
 
       <div className={styles.contentLayout}>
@@ -67,7 +87,10 @@ const ClassReportsClient = ({ user }) => {
                 <div key={`bar-${index}`} className={styles.barGroup}>
                   <div 
                     className={styles.bar} 
-                    style={{ height: item.height || '10%' }}
+                    style={{ 
+                        height: item.height || '10%',
+                        backgroundColor: item.label === 'Failing' || item.label === 'Below 75' ? '#e74c3c' : '#2d5f4f' 
+                    }}
                   >
                     {item.count}
                   </div>
@@ -91,14 +114,17 @@ const ClassReportsClient = ({ user }) => {
               </thead>
               <tbody>
                 {reportData?.students?.map((student, idx) => (
-                  <tr key={`rank-${student.lrn}-${idx}`}>
+                  <tr key={idx} className={student.final < 75 ? styles.atRiskRow : ''}>
                     <td>
-                      <div className={`${styles.rankBadge} ${student.rank === 1 ? styles.gold : student.rank === 2 ? styles.silver : student.rank === 3 ? styles.bronze : student.rank >= 4 ? styles.neutral : ''}`}>
+                      <div className={`${styles.rankBadge} ${student.rank === 1 ? styles.gold : student.rank === 2 ? styles.silver : student.rank === 3 ? styles.bronze : styles.neutral}`}>
                         {student.rank}
                       </div>
                     </td>
                     <td>{student.lrn}</td>
-                    <td>{student.name}</td>
+                    <td>
+                        {student.name}
+                        {student.final < 75 && <span className={styles.riskTag}>At Risk</span>}
+                    </td>
                     <td><strong>{student.final}</strong></td>
                     <td>
                       <span className={student.remarks === 'PASSED' ? styles.statusPassed : styles.statusFailed}>
@@ -122,9 +148,7 @@ const ClassReportsClient = ({ user }) => {
               onChange={(e) => setFilters({...filters, classId: e.target.value})}
             >
               {subjects.map((sub) => (
-                <option key={`opt-${sub.classid}`} value={sub.classid}>
-                  {sub.subject} ({sub.section})
-                </option>
+                <option key={sub.classid} value={sub.classid}>{sub.subject} ({sub.section})</option>
               ))}
             </select>
           </div>
@@ -137,16 +161,12 @@ const ClassReportsClient = ({ user }) => {
               onChange={(e) => setFilters({...filters, quarter: parseInt(e.target.value)})}
             >
               {[1, 2, 3, 4].map(q => (
-                <option key={q} value={q}>{q === 1 ? '1st' : q === 2 ? '2nd' : q === 3 ? '3rd' : '4th'} Quarter</option>
+                <option key={q} value={q}>Quarter {q}</option>
               ))}
             </select>
           </div>
 
-          <button 
-            className={styles.generateBtn} 
-            onClick={handleGenerate} 
-            disabled={loading}
-          >
+          <button className={styles.generateBtn} onClick={handleGenerate} disabled={loading}>
             {loading ? "Generating..." : "Generate Report"}
           </button>
         </div>
@@ -155,19 +175,20 @@ const ClassReportsClient = ({ user }) => {
   );
 };
 
-const StatCard = ({ label, value, iconType }) => (
+const StatCard = ({ label, value, iconType, isAlert }) => (
   <div className={styles.statCard}>
     <div className={styles.statHeader}>
-      <div className={styles.statIcon}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <div className={styles.statIcon} style={isAlert ? {background: '#fdecea'} : {}}>
+        <svg viewBox="0 0 24 24" fill="none" stroke={isAlert ? "#e74c3c" : "#2d5f4f"} strokeWidth="2">
           {iconType === 'chart' && <path d="M18 20V10M12 20V4M6 20v-6" />}
           {iconType === 'check' && <path d="M20 6L9 17l-5-5" />}
           {iconType === 'users' && <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />}
+          {iconType === 'warning' && <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
         </svg>
       </div>
       <span>{label}</span>
     </div>
-    <div className={styles.statValue}>{value}</div>
+    <div className={styles.statValue} style={isAlert ? {color: '#e74c3c', borderColor: '#e74c3c'} : {}}>{value}</div>
   </div>
 );
 

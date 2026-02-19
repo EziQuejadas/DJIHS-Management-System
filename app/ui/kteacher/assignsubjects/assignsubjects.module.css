@@ -170,3 +170,215 @@
 .mainRow:hover {
     background-color: #f0f7f4 !important;
 }
+
+/* --- Modal Overlay & Animation --- */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+/* --- Modal Header --- */
+.modalHeader {
+    padding: 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    color: #2d5f4f;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.closeX {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.closeX:hover {
+    color: #ef4444;
+}
+
+/* --- Modal Body & Forms --- */
+.modalBody {
+    padding: 20px;
+}
+
+.detailItem {
+    margin-bottom: 15px;
+}
+
+.detailItem label, .formField label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.detailItem p {
+    margin: 0;
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.formField {
+    margin-bottom: 20px;
+}
+
+.formField input, .formField select {
+    width: 100%;
+    padding: 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    transition: border-color 0.2s;
+}
+
+.formField input:focus, .formField select:focus {
+    outline: none;
+    border-color: #2d5f4f;
+}
+
+/* --- Modal Footer --- */
+.modalFooter {
+    padding: 15px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cancelBtn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #4a5568;
+    cursor: pointer;
+}
+
+.saveBtn {
+    padding: 8px 20px;
+    background: #2d5f4f;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.saveBtn:hover {
+    background: #1a3d32;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.viewHeaderInfo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.studentTableWrapper {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.studentListTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.studentListTable th {
+    position: sticky;
+    top: 0;
+    background: #2d5f4f;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+
+.studentListTable td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.studentListTable tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.teacherSelect {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.teacherSelect:focus {
+    border-color: #2d5f4f;
+    outline: none;
+}
+
+.helperText {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 10px;
+    font-style: italic;
+    line-height: 1.4;
+}

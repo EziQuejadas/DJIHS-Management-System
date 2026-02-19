@@ -5,105 +5,138 @@
 }
 
 .pageHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+    text-align: center;
+    margin-bottom: 40px;
 }
 
 .pageTitle {
     font-size: 28px;
     color: #2d5f4f;
-    font-weight: 600;
-}
-
-.pageDate {
-    font-size: 14px;
-    color: #666;
-}
-
-/* Report Cards Grid */
-.reportsGrid {
-    display: grid;
-    gap: 20px;
-}
-
-.reportCard {
-    background: white;
-    border-radius: 8px;
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 25px;
-}
-
-.reportIcon {
-    width: 70px;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    flex-shrink: 0;
-}
-
-.reportIcon svg {
-    width: 40px;
-    height: 40px;
-    stroke: white;
-    fill: none;
-}
-
-/* Gradients */
-.blueIcon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.greenIcon { background: linear-gradient(135deg, #2d5f4f 0%, #1a3d32 100%); }
-.orangeIcon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-
-.reportContent {
-    flex: 1;
-}
-
-.reportTitle {
-    font-size: 20px;
-    font-weight: 600;
-    color: #333;
+    font-weight: 700;
     margin-bottom: 8px;
 }
 
-.reportDescription {
-    font-size: 14px;
+.subtitle {
+    font-size: 16px;
     color: #666;
-    margin-bottom: 15px;
 }
 
-.generateBtn {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* Centered Layout for the Single Master Card */
+.centeredCard {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 20px;
+}
+
+.mainReportCard {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    border: 1px solid #eef0f2;
+}
+
+.iconContainer {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #2d5f4f 0%, #1a3d32 100%);
+    margin: 0 auto 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
     color: white;
 }
 
-.generateBtn:hover {
+.mainReportCard h3 {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.mainReportCard p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+/* Quarter Selection Styling */
+.filterSection {
+    background-color: #f0f4f2;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.filterSection label {
+    font-weight: 600;
+    color: #2d5f4f;
+    font-size: 14px;
+}
+
+.quarterDropdown {
+    width: 100%;
+    max-width: 250px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    background-color: white;
+    font-size: 15px;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+}
+
+.quarterDropdown:focus {
+    border-color: #2d5f4f;
+    box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.1);
+}
+
+/* Preparer Attribution Section */
+.preparerNote {
+    margin-bottom: 30px;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #888;
+}
+
+.preparerNote strong {
+    display: block;
+    color: #333;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+/* Action Button */
+.primaryBtn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #2d5f4f 0%, #1a3d32 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primaryBtn:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(45, 95, 79, 0.3);
 }
 
-/* Button Variants */
-.btnBlue { 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+.primaryBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }
-.btnBlue:hover { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
-
-.btnGreen { 
-    background: linear-gradient(135deg, #2d5f4f 0%, #1a3d32 100%); 
-}
-.btnGreen:hover { box-shadow: 0 4px 12px rgba(45, 95, 79, 0.4); }
-
-.btnOrange { 
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-}
-.btnOrange:hover { box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4); }
