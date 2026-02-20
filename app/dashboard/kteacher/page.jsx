@@ -7,7 +7,8 @@ import {
   fetchDashboardStats, 
   fetchTeacherList, 
   fetchSubjectList, 
-  fetchSectionList 
+  fetchSectionList,
+  getSessionUser
 } from '@/app/lib/data';
 import styles from '@/app/ui/kteacher/dashboard.module.css';
 
@@ -31,6 +32,12 @@ const KeyTeacherDashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        
+        const user = await getSessionUser();
+        if (user) {
+          setUserName(user.first_name || "User");
+        }
+
         const [statsData, tData, sData, secData] = await Promise.all([
           fetchDashboardStats(),
           fetchTeacherList(),
@@ -42,21 +49,12 @@ const KeyTeacherDashboard = () => {
         setTeacherOptions(tData.map(t => ({ id: t.teacherid, label: `${t.firstname} ${t.lastname}` })));
         setSubjectOptions(sData.map(s => ({ id: s.subjectcode, label: s.subjectname })));
         setSectionOptions(secData.map(sec => ({ id: sec.sectionid, label: sec.sectionname })));
+
       } catch (err) {
-        console.error("Data loading failed:", err);
+        console.error("Dashboard loading failed:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        const { data: profile } = await supabase
-          .from('users') 
-          .select('first_name')
-          .eq('email', user.email)
-          .single();
-
-        if (profile) setUserName(profile.first_name);
-      }
-      setLoading(false);
     };
 
     loadDashboardData();
