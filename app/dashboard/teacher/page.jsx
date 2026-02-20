@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/app/lib/utils'; 
 import styles from '@/app/ui/steacher/steacherdashboard/steacherdashboard.module.css';
 import Link from 'next/link';
-import { getTeacherDashboardStatsByEmail } from '@/app/lib/data';
+import { getTeacherDashboardStatsByEmail, getSessionUser } from '@/app/lib/data';
+
 
 export default function TeacherDashboard() {
     const [loading, setLoading] = useState(true);
@@ -17,23 +18,19 @@ export default function TeacherDashboard() {
     const [daysLeft, setDaysLeft] = useState(0);
     const [activeQuarter, setActiveQuarter] = useState("");
 
-    const USER_EMAIL = "cbgalmonte@gmail.com";
-
     useEffect(() => {
         async function loadDashboardData() {
             try {
                 setLoading(true);
 
-                // 1. Fetch Teacher Name
-                const { data: userData } = await supabase
-                    .from('users')
-                    .select('first_name')
-                    .eq('email', USER_EMAIL)
-                    .maybeSingle();
-                if (userData) setTeacherName(userData.first_name);
+                const user = await getSessionUser();
+            
+                const userEmail = user.email;
+                const firstName = user.first_name;
+                setTeacherName(firstName);
 
                 // 2. Fetch Stats
-                const data = await getTeacherDashboardStatsByEmail(USER_EMAIL);
+                const data = await getTeacherDashboardStatsByEmail(userEmail);
                 if (data && data.length > 0) {
                     setClassData(data);
                     setStats({
