@@ -18,13 +18,14 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import styles from '@/app/ui/dashboard/classreports/classreports.module.css';
 import { fetchReportData } from '@/app/lib/data';
+import RoleGuard  from '@/app/components/ProtectedRoutes';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, PointElement, 
   LineElement, ScatterController, Title, Tooltip, Legend
 );
 
-const ClassReports = () => {
+const ClassReportsContent = () => {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -295,4 +296,10 @@ const ClassReports = () => {
   );
 };
 
-export default ClassReports;
+export default function ClassReports() {
+  return (
+    <RoleGuard allowedRole="registrar"> 
+      <ClassReportsContent />
+    </RoleGuard>
+  );
+}

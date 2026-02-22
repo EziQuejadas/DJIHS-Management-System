@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react"; // Added React for React.use()
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Search from "@/app/ui/dashboard/search/search";
 import styles from "@/app/ui/dashboard/records/records.module.css";
 import { fetchStudentRecords, fetchFilterOptions } from "@/app/lib/data";
 import FilterSelect from "@/app/ui/dashboard/records/filterBar/FilterSelect";
+// Ensure this import matches your filename exactly (default export)
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const RecordsPage = ({ searchParams }) => {
+const RecordsContent = ({ searchParams }) => {
   const router = useRouter();
   
-  // 1. Unwrap searchParams using React.use()
+  // Unwrap searchParams using React.use()
   const resolvedSearchParams = React.use(searchParams);
   
   const [data, setData] = useState({ students: [], sections: [], schoolYears: [] });
   const [loading, setLoading] = useState(true);
 
-  // 2. Extract values from the resolved object
   const query = resolvedSearchParams?.q || "";
   const grade = resolvedSearchParams?.grade || "";
   const section = resolvedSearchParams?.section || "";
@@ -27,6 +28,7 @@ const RecordsPage = ({ searchParams }) => {
     const loadData = async () => {
       setLoading(true);
       const students = await fetchStudentRecords({ query, grade, section, status, sy });
+      
       const sortedStudents = [...students].sort((a, b) => {
         const nameA = `${a.students.lastname} ${a.students.firstname}`.toLowerCase();
         const nameB = `${b.students.lastname} ${b.students.firstname}`.toLowerCase();
@@ -35,14 +37,12 @@ const RecordsPage = ({ searchParams }) => {
 
       const { sections, schoolYears } = await fetchFilterOptions();
       
-      // Update data with the sorted list
       setData({ students: sortedStudents, sections, schoolYears });
       setLoading(false);
     };
     loadData();
   }, [query, grade, section, status, sy]);
 
-  // 3. This now works because 'grade' is a string, not a Promise
   const availableSections = data.sections.filter(s => 
     !grade || s.gradelevel === parseInt(grade)
   );
@@ -139,4 +139,13 @@ const RecordsPage = ({ searchParams }) => {
   );
 };
 
-export default RecordsPage;
+// Final Export with Protection and Suspense
+export default function RecordsPage(props) {
+  return (
+    <RoleGuard allowedRole="registrar">
+      <Suspense fallback={<div>Loading Page...</div>}>
+        <RecordsContent {...props} />
+      </Suspense>
+    </RoleGuard>
+  );
+}

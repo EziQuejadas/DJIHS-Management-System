@@ -8,8 +8,10 @@ import {
   clearAuditLogs 
 } from "@/app/lib/data";
 import styles from "@/app/ui/dashboard/settings/configuration.module.css";
+// 1. Import the Guard
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const SystemConfigPage = () => {
+const SystemConfigContent = () => {
   const [config, setConfig] = useState({
     active_sy: "2025-26",
     q1_deadline: "",
@@ -134,14 +136,14 @@ const SystemConfigPage = () => {
           </div>
         </section>
 
-        {/* Section 2: Individual Submission Management (Updated Message) */}
+        {/* Section 2: Individual Submission Management */}
         <section className={styles.configSection}>
           <div className={styles.sectionHeader}><h3>Individual Submission Override</h3></div>
           <div className={styles.sectionContent}>
             <div style={{ 
               padding: '15px', 
               background: '#f0f7ff', 
-              border: '1px border #bae7ff', 
+              border: '1px solid #bae7ff', 
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
@@ -259,4 +261,11 @@ const SystemConfigPage = () => {
   );
 };
 
-export default SystemConfigPage;
+// 2. Export the Protected Page
+export default function SystemConfigPage() {
+  return (
+    <RoleGuard allowedRole="registrar">
+      <SystemConfigContent />
+    </RoleGuard>
+  );
+}

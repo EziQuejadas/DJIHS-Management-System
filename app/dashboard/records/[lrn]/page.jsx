@@ -1,19 +1,38 @@
+"use client";
+
+import { useEffect, useState, use } from "react";
 import { fetchStudentFullProfile } from "@/app/lib/data";
 import styles from "@/app/ui/dashboard/records/studentprofile.module.css";
 import Image from "next/image";
 import GradeModal from "./gradeModal";
 import BackButton from "./BackButton";
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const StudentProfile = async ({ params }) => {
-  const { lrn } = await params;
-  const data = await fetchStudentFullProfile(lrn);
+const StudentProfileContent = ({ params }) => {
+  // Unwrap params for Next.js 15
+  const resolvedParams = use(params);
+  const lrn = resolvedParams?.lrn;
 
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getData = async () => {
+      if (!lrn) return;
+      setLoading(true);
+      const result = await fetchStudentFullProfile(lrn);
+      setData(result);
+      setLoading(false);
+    };
+    getData();
+  }, [lrn]);
+
+  if (loading) return <div className={styles.contentWrapper}>Loading student profile...</div>;
   if (!data) return <div className={styles.contentWrapper}>Record not found.</div>;
 
   const subjectsMap = {};
   let hasPendingGrades = false;
 
-  // Since fetcher now returns grades directly in the root or data.grades
   const gradesToProcess = data.grades || [];
 
   gradesToProcess.forEach((g) => {
@@ -70,7 +89,6 @@ const StudentProfile = async ({ params }) => {
               </div>
               <div className={styles.infoItem}>
                 <div className={styles.infoLabel}>Student Name</div>
-                {/* UPDATED: Pulling directly from data root */}
                 <div className={styles.infoValue}>
                   {data.lastname?.toUpperCase()}, {data.firstname} {data.middleinitial ? `${data.middleinitial}.` : ''}
                 </div>
@@ -146,4 +164,10 @@ const StudentProfile = async ({ params }) => {
   );
 };
 
-export default StudentProfile;
+export default function StudentProfile(props) {
+  return (
+    <RoleGuard allowedRole="registrar">
+      <StudentProfileContent {...props} />
+    </RoleGuard>
+  );
+}

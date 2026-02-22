@@ -1,12 +1,31 @@
+"use client";
+
+import { useEffect, useState, use } from "react"; // Added 'use' to unwrap params
 import { fetchSectionDetails } from "@/app/lib/data";
 import styles from "@/app/ui/dashboard/classes/sectiondetails.module.css";
 import Link from "next/link";
 import ExportButton from "@/app/ui/dashboard/classes/ExportButton";
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const SectionDetailsPage = async ({ params }) => {
-  const { id } = await params;
-  const data = await fetchSectionDetails(id);
+const SectionDetailsContent = ({ params }) => {
+  const resolvedParams = use(params);
+  const id = resolvedParams?.id;
 
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getData = async () => {
+      if (!id) return;
+      setLoading(true);
+      const result = await fetchSectionDetails(id);
+      setData(result);
+      setLoading(false);
+    };
+    getData();
+  }, [id]);
+
+  if (loading) return <div className={styles.contentWrapper}>Loading section details...</div>;
   if (!data) return <div className={styles.contentWrapper}>Section not found.</div>;
 
   const { section, students } = data;
@@ -51,7 +70,6 @@ const SectionDetailsPage = async ({ params }) => {
                 <tr key={entry.lrn}>
                   <td>{entry.lrn}</td>
                   <td className={styles.studentName}>
-                    {/* Format: LASTNAME, Firstname M. */}
                     {entry.students.lastname?.toUpperCase()}, {entry.students.firstname} {entry.students.middleinitial ? `${entry.students.middleinitial}.` : ""}
                   </td>
                   <td>
@@ -75,4 +93,11 @@ const SectionDetailsPage = async ({ params }) => {
   );
 };
 
-export default SectionDetailsPage;
+// 2. Wrap the page with RoleGuard for the Registrar
+export default function SectionDetailsPage(props) {
+  return (
+    <RoleGuard allowedRole="registrar">
+      <SectionDetailsContent {...props} />
+    </RoleGuard>
+  );
+}

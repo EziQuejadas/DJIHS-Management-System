@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import styles from '@/app/ui/kteacher/assignsubjects/gradesummary.module.css';
 
 const GradeSummaryClient = ({ initialData }) => {
-  // Use the data passed from the server as the initial state
   const [summaries] = useState(initialData || []);
   const router = useRouter();
 

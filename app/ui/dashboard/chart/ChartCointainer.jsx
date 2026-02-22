@@ -1,13 +1,24 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getSubjectPerformance } from "@/app/lib/data";
-import SubjectChart from "./SubjectChart"; // The Recharts component
+import SubjectChart from "./SubjectChart";
 
-export default async function ChartContainer() {
-  const chartData = await getSubjectPerformance();
+export default function ChartContainer() {
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // If database is empty, we can provide fallback data or an empty state
-  if (!chartData || chartData.length === 0) {
-    return <div>No performance data available.</div>;
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getSubjectPerformance();
+      setChartData(data);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div>Loading Chart...</div>;
+  if (!chartData || chartData.length === 0) return <div>No performance data available.</div>;
 
   return <SubjectChart data={chartData} />;
 }

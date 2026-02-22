@@ -11,8 +11,9 @@ import {
   getSessionUser
 } from '@/app/lib/data';
 import styles from '@/app/ui/kteacher/dashboard.module.css';
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const KeyTeacherDashboard = () => {
+const KeyTeacherDashboardContent = () => {
   const [userName, setUserName] = useState("User");
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
@@ -32,7 +33,7 @@ const KeyTeacherDashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        
+
         const user = await getSessionUser();
         if (user) {
           setUserName(user.first_name || "User");
@@ -60,7 +61,6 @@ const KeyTeacherDashboard = () => {
     loadDashboardData();
   }, []);
 
-  // --- Manual Assignment Logic ---
   const handleAssign = async () => {
     const { subject, teacher, section } = assignment;
     if (!subject || !teacher || !section) {
@@ -100,7 +100,6 @@ const KeyTeacherDashboard = () => {
     }
   };
 
-  // --- Template Download Logic ---
   const downloadTemplate = async () => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet(importType === 'classes' ? 'Class Assignments' : 'Student List');
@@ -339,4 +338,10 @@ const SubjectIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 2
 const AlertIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>);
 const BuildingIcon = () => (<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v11a2 2 0 00-2 2h4a2 2 0 002-2v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>);
 
-export default KeyTeacherDashboard;
+export default function KeyTeacherDashboard() {
+  return (
+    <RoleGuard allowedRole="key teacher">
+      <KeyTeacherDashboardContent />
+    </RoleGuard>
+  );
+}

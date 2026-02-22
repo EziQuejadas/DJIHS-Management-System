@@ -4,8 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchVerificationData, fetchGradeEntryData } from '@/app/lib/data';
 import { supabase } from '@/app/lib/utils';
 import styles from '@/app/ui/kteacher/verification/verification.module.css';
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-export default function VerificationPage() {
+function VerificationContent() {
   const [groupedData, setGroupedData] = useState({});
   const [loading, setLoading] = useState(true);
   const [quarter, setQuarter] = useState(1);
@@ -279,3 +280,11 @@ const ActionButton = ({ title, icon, onClick, disabled }) => (
 const ViewIcon = () => <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>;
 const VerifyIcon = () => <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const ForwardIcon = () => <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>;
+
+export default function VerificationPage() {
+  return (
+    <RoleGuard allowedRole="key teacher">
+      <VerificationContent />
+    </RoleGuard>
+  );
+}

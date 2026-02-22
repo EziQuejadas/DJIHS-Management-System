@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { supabase } from '@/app/lib/utils';
 import { fetchAllAssignments, deleteAssignment } from '@/app/lib/data'; 
 import styles from '@/app/ui/kteacher/assignsubjects/assignsubjects.module.css';
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const AssignSubjectsPage = () => {
+const AssignSubjectsPageContent = () => {
   const [groupedAssignments, setGroupedAssignments] = useState({});
   const [allTeachers, setAllTeachers] = useState([]); // Store teacher list for reassignment
   const [loading, setLoading] = useState(true);
@@ -320,4 +321,10 @@ const ActionButton = ({ icon, onClick }) => {
   );
 };
 
-export default AssignSubjectsPage;
+export default function AssignSubjectsPage() {
+  return (
+    <RoleGuard allowedRole="key teacher">
+      <AssignSubjectsPageContent />
+    </RoleGuard>
+  );
+}

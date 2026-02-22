@@ -3,16 +3,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchSubmissionStatuses } from '@/app/lib/data';
 import styles from '@/app/ui/kteacher/submissions/submissions.module.css';
+// 1. Import the Guard
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
 const TeacherRow = ({ teacher, classes }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Calculate stats for this specific teacher
   const totalClasses = classes.length;
   const submittedClasses = classes.filter(c => ['forwarded', 'completed'].includes(c.status)).length;
   const isFullyDone = totalClasses === submittedClasses;
 
-  // Alphabetize subjects within the dropdown
   const sortedClasses = [...classes].sort((a, b) => 
     a.subject.localeCompare(b.subject)
   );
@@ -75,7 +75,8 @@ const TeacherRow = ({ teacher, classes }) => {
   );
 };
 
-export default function SubmissionsPage() {
+// Internal content component
+function SubmissionsContent() {
   const [groupedData, setGroupedData] = useState({});
   const [loading, setLoading] = useState(true);
   const [quarter, setQuarter] = useState(1);
@@ -85,7 +86,6 @@ export default function SubmissionsPage() {
       setLoading(true);
       const rawData = await fetchSubmissionStatuses(quarter);
       
-      // GROUPING ALGORITHM: Turn flat list into { "Teacher Name": [class1, class2] }
       const grouped = (rawData || []).reduce((acc, item) => {
         if (!acc[item.teacher]) acc[item.teacher] = [];
         acc[item.teacher].push(item);
@@ -102,7 +102,6 @@ export default function SubmissionsPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Handle the sorting of the main teacher list
   const sortedTeacherEntries = Object.entries(groupedData).sort(([nameA], [nameB]) => 
     nameA.localeCompare(nameB, undefined, { sensitivity: 'base' })
   );
@@ -156,5 +155,14 @@ export default function SubmissionsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 2. Export with RoleGuard
+export default function SubmissionsPage() {
+  return (
+    <RoleGuard allowedRole="key teacher">
+      <SubmissionsContent />
+    </RoleGuard>
   );
 }

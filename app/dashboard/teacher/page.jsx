@@ -5,15 +5,15 @@ import { supabase } from '@/app/lib/utils';
 import styles from '@/app/ui/steacher/steacherdashboard/steacherdashboard.module.css';
 import Link from 'next/link';
 import { getTeacherDashboardStatsByEmail, getSessionUser } from '@/app/lib/data';
+// 1. Import RoleGuard
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-
-export default function TeacherDashboard() {
+function TeacherDashboardContent() {
     const [loading, setLoading] = useState(true);
     const [teacherName, setTeacherName] = useState("Teacher");
     const [classData, setClassData] = useState([]);
     const [stats, setStats] = useState({ students: 0, subjects: 0, pending: 0 });
     
-    // Reminder States
     const [showReminder, setShowReminder] = useState(false);
     const [daysLeft, setDaysLeft] = useState(0);
     const [activeQuarter, setActiveQuarter] = useState("");
@@ -24,12 +24,14 @@ export default function TeacherDashboard() {
                 setLoading(true);
 
                 const user = await getSessionUser();
-            
+                
+                // Safety check for user session
+                if (!user) return;
+
                 const userEmail = user.email;
                 const firstName = user.first_name;
                 setTeacherName(firstName);
 
-                // 2. Fetch Stats
                 const data = await getTeacherDashboardStatsByEmail(userEmail);
                 if (data && data.length > 0) {
                     setClassData(data);
@@ -40,7 +42,6 @@ export default function TeacherDashboard() {
                     });
                 }
 
-                // 3. FETCH ACTIVE CONFIG & DEADLINES
                 const { data: config } = await supabase
                     .from('system_config')
                     .select('*')
@@ -48,7 +49,6 @@ export default function TeacherDashboard() {
                     .single();
 
                 if (config) {
-                    // Logic: You can change "q2" to "q3" etc. based on your current needs
                     const currentQ = "q2"; 
                     const deadlineKey = `${currentQ}_deadline`;
                     const deadlineValue = config[deadlineKey];
@@ -64,7 +64,6 @@ export default function TeacherDashboard() {
                             const diffInTime = deadlineDate.getTime() - today.getTime();
                             const diffInDays = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
 
-                            // Show if within 10 days and hasn't passed
                             if (diffInDays <= 10 && diffInDays >= 0) {
                                 setDaysLeft(diffInDays);
                                 setShowReminder(true);
@@ -88,21 +87,14 @@ export default function TeacherDashboard() {
         setShowReminder(false);
     };
 
-    // --- RENDER LOGIC ---
     if (loading) return <div className={styles.container}>Loading Portal...</div>;
 
     return (
         <div className={styles.container}>
-            {/* DYNAMIC POPUP MODAL */}
             {showReminder && (
                 <div className={styles.modalOverlay}>
                     <div className={styles.modalBox}>
-                        <button className={styles.closeX} 
-                        onClick={handleCloseReminder}
-                        aria-label="Close"
-                         >
-                        &times;
-                         </button>
+                        <button className={styles.closeX} onClick={handleCloseReminder} aria-label="Close">&times;</button>
                         <div className={styles.modalHeader}></div>
                         <div className={styles.modalContent}>
                             <div className={styles.modalIcon}>📢</div>
@@ -112,18 +104,12 @@ export default function TeacherDashboard() {
                                 <span className={styles.daysHighlight}> {daysLeft} days</span>. 
                                 Please finalize your records soon.
                             </p>
-                            <button 
-                                onClick={handleCloseReminder} 
-                                className={styles.modalButton}
-                            >
-                                Got it, thanks!
-                            </button>
+                            <button onClick={handleCloseReminder} className={styles.modalButton}>Got it, thanks!</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* HEADER */}
             <div className={styles.welcomeSection}>
                 <div className={styles.welcomeText}>
                     <h3>Welcome back, {teacherName}!</h3>
@@ -133,14 +119,12 @@ export default function TeacherDashboard() {
                 </div>
             </div>
 
-            {/* STATS */}
             <div className={styles.statsContainer}>
                 <StatCard label="Total Students" value={stats.students} />
                 <StatCard label="Subjects Taught" value={stats.subjects} />
                 <StatCard label="Grades Pending" value={stats.pending} />
             </div>
 
-            {/* MAIN CONTENT */}
             <div className={styles.contentRow}>
                 <div className={styles.sectionCard}>
                     <div className={styles.sectionHeader}>
@@ -170,7 +154,6 @@ export default function TeacherDashboard() {
                     </div>
                 </div>
 
-                {/* SIDEBAR */}
                 <div className={styles.sidebar}>
                     <div className={styles.sectionCard}>
                         <h3 className={styles.sectionTitle}>Quick Actions</h3>
@@ -185,7 +168,15 @@ export default function TeacherDashboard() {
     );
 }
 
-// --- REUSABLE COMPONENT ---
+// 2. Wrap the final export
+export default function TeacherDashboard() {
+    return (
+        <RoleGuard allowedRole="subject teacher">
+            <TeacherDashboardContent />
+        </RoleGuard>
+    );
+}
+
 function StatCard({ label, value }) {
     return (
         <div className={styles.statCard}>

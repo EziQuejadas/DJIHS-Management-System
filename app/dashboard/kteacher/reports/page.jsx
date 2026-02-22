@@ -6,8 +6,9 @@ import autoTable from 'jspdf-autotable';
 import { supabase } from '@/app/lib/utils';
 import { fetchSubmissionStatuses, getSessionUser } from '@/app/lib/data'; 
 import styles from '@/app/ui/kteacher/reports/reports.module.css';
+import RoleGuard from '@/app/components/ProtectedRoutes';
 
-const ReportsPage = () => {
+const ReportsPageContent = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedBy, setGeneratedBy] = useState("Authorized Staff");
   const [selectedQuarter, setSelectedQuarter] = useState(1); // Default to Quarter 1
@@ -188,4 +189,10 @@ const ReportsPage = () => {
   );
 };
 
-export default ReportsPage;
+export default function ReportsPage() {
+  return (
+    <RoleGuard allowedRole="key teacher">
+      <ReportsPageContent />
+    </RoleGuard>
+  );
+}

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState, useCallback } from 'react';
 import styles from '../ui/dashboard/dashboard.module.css';
 import Card from '../ui/dashboard/card/card';
 import Chart from '../ui/dashboard/chart/ChartCointainer';
@@ -10,25 +13,45 @@ import {
   getRetentionRate,
   getTotalCounts
 } from '@/app/lib/data';
+import RoleGuard from "@/app/components/ProtectedRoutes";
 
-const Dashboard = async () => {
-  // Fetching all data in parallel to keep the dashboard fast
-  const [
-    gradRate, 
-    retRate, 
-    attRate, 
-    counts
-  ] = await Promise.all([
-    getGraduationRate(),
-    getRetentionRate(),
-    getAttendanceRate(),
-    getTotalCounts()
-  ]);
+const DashboardContent = () => {
+  const [data, setData] = useState({
+    gradRate: "0%",
+    retRate: "0%",
+    attRate: "0%",
+    counts: { students: 0, teachers: 0 }
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [gradRate, retRate, attRate, counts] = await Promise.all([
+        getGraduationRate(),
+        getRetentionRate(),
+        getAttendanceRate(),
+        getTotalCounts()
+      ]);
+      
+      setData({ gradRate, retRate, attRate, counts });
+    } catch (error) {
+      console.error("Dashboard data fetch failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  if (loading) {
+    return <div className={styles.wrapper}>Loading Dashboard Overview...</div>;
+  }
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.main}>
-        {/* The Subject Performance Chart (Client Component handles internal filtering) */}
         <div className={styles.chart}>
           <Chart />
         </div>
@@ -36,45 +59,41 @@ const Dashboard = async () => {
         <div className={styles.cardsRow}>
           <Card 
             title="Graduation Rate" 
-            value={gradRate} 
+            value={data.gradRate} 
             color="#1F6354" 
           />
           <Card 
             title="Retention Rate" 
-            value={retRate} 
+            value={data.retRate} 
             color="#1F6354" 
           />
         </div>
 
-        {/* Enrollment Trends Line Chart */}
         <div className={styles.enrollmentchart}>
           <EnrollmentChart />
         </div>
       </div>
 
       <div className={styles.side}>
-        {/* Real-time Student/Teacher Counts */}
         <div className={styles.stats}>
           <StatBox 
             type="Student" 
-            count={counts.students.toLocaleString()} 
+            count={data.counts.students.toLocaleString()} 
           />
           <StatBox 
             type="Teacher" 
-            count={counts.teachers.toLocaleString()} 
+            count={data.counts.teachers.toLocaleString()} 
           />
         </div>
 
-        {/* Gender or Status Distribution Pie Chart */}
         <div className={styles.piechart}>
           <PieChart />
         </div>
 
-        {/* Third Progress Card */}
         <div className={styles.card}>
           <Card 
             title="Attendance Rate" 
-            value={attRate} 
+            value={data.attRate} 
             color="#1F6354" 
           />
         </div>
@@ -83,4 +102,11 @@ const Dashboard = async () => {
   );
 };
 
-export default Dashboard;
+// Main Export with Protection
+export default function Dashboard() {
+  return (
+    <RoleGuard allowedRole="registrar">
+      <DashboardContent />
+    </RoleGuard>
+  );
+}

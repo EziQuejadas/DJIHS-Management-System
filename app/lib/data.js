@@ -229,8 +229,9 @@ export const fetchStudentRecords = async ({ query, grade, section, status, sy })
     }
 
     if (query) {
-      // Searches across LRN or Student Name
-      request = request.or(`lrn.ilike.%${query}%,students.lastname.ilike.%${query}%,students.firstname.ilike.%${query}%`);
+      request = request.or(
+        `lrn.ilike.%${query}%,lastname.ilike.%${query}%,firstname.ilike.%${query}%`,
+      { foreignTable: 'students'});
     }
 
     // 3. Set a high limit and execute
